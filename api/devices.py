@@ -1,5 +1,5 @@
 import Domoticz
-from .cclass import multilevel_switch, binary_switch, multilevel_sensor
+from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller
 
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
@@ -10,8 +10,11 @@ def find_device_id(device_id):
     return device_id[:i] if i > -1 else None
 
 def find_device_and_type(device_id):
-    i = device_id.rfind("/")
-    return device_id[:i] if i > -1 else None, device_id[i+1:] if i > -1 else None
+    if scene_controller in device_id:
+        return device_id, "scene"
+    else:
+        i = device_id.rfind("/")
+        return device_id[:i] if i > -1 else None, device_id[i+1:] if i > -1 else None
 
 
 def indexRegisteredDevices(plugin, Devices):
@@ -77,6 +80,20 @@ def registerDevice(plugin, device_id, device_type, new_unit_id):
             ).Create()
         else:  # Unknown sensor type
             return False
+    elif scene_controller in device_id:
+        Domoticz.Device(
+            Name=device_id,
+            Unit=new_unit_id,
+            TypeName="Push On",
+            # Type=244,
+            # Subtype=73,
+            # Switchtype=7,
+            DeviceID=device_id,
+        ).Create()
+
+    else:
+        # Unknown device
+        return False
 
     # Map the added device
     plugin.mqtt_devices.append(device_id)
@@ -101,3 +118,10 @@ def updateDevice(plugin, device, value, Devices):
         nValue = int(value)
         sValue = str(value)
         Devices[unit].Update(nValue=nValue, sValue=sValue)
+
+    elif scene_controller in device:
+        if value is not None:
+            nValue = 1
+            sValue = "On"
+            Devices[unit].Update(nValue=nValue, sValue=sValue)
+            

@@ -114,6 +114,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/+/37/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
+                        {"Topic": "zwave/+/+/91/#", "QoS": 0},
+                        {"Topic": "zwave/+/91/#", "QoS": 0},
                     ],
                 }
             )
@@ -128,7 +130,7 @@ class BasePlugin:
                         # Unable to register the new device, ignore
                         return
 
-                api.devices.updateDevice(self, device, payload["value"], Devices)
+                api.devices.updateDevice(self, device, payload.get("value"), Devices)
                 # unit = self.mqtt_unit_map[device]
 
                 # if api.cclass.multilevel_switch in device:
