@@ -78,7 +78,7 @@ class BasePlugin:
         Domoticz.Log("onStop called")
 
     def onConnect(self, Connection, Status, Description):
-        Domoticz.Log("onConnect called")
+        # Domoticz.Log("onConnect called")
         if Status == 0:
             Domoticz.Debug("MQTT connected successfully.")
             sendData = {"Verb": "CONNECT", "ID": "645364363"}
@@ -96,11 +96,13 @@ class BasePlugin:
             )
 
     def onMessage(self, Connection, Data):
-        Domoticz.Log("onMessage called")
-        DumpDictionaryToLog(Data)
+        # Domoticz.Log("onMessage called")
+        # DumpDictionaryToLog(Data)
+
+        importlib.reload(api)
 
         if Data["Verb"] == "CONNACK":
-            Domoticz.Log("Connection accepted")
+            Domoticz.Log("MQTT Connection accepted")
             self.mqttConn.Send(
                 {
                     "Verb": "SUBSCRIBE",
@@ -110,41 +112,49 @@ class BasePlugin:
                         {"Topic": "zwave/+/+/38/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/+/37/+/currentValue", "QoS": 0},
+                        {"Topic": "zwave/+/+/49/#", "QoS": 0},
+                        {"Topic": "zwave/+/49/#", "QoS": 0},
                     ],
                 }
             )
         elif Data["Verb"] == "PUBLISH":
-            i = Data["Topic"].find("currentValue")
+            
+            device, device_type = api.devices.find_device_and_type(Data["Topic"])
+            payload = json.loads(Data["Payload"].decode("utf-8"))
 
-            if i > -1:
-                device = Data["Topic"][0:i - 1]
-
+            if device is not None:
                 if device not in self.mqtt_devices:
-                    api.devices.registerDevice(self, device, firstFree())
+                    if not api.devices.registerDevice(self, device, device_type, firstFree()):
+                        # Unable to register the new device, ignore
+                        return
 
-                payload = json.loads(Data["Payload"].decode("utf-8"))
-                unit = self.mqtt_unit_map[device]
+                api.devices.updateDevice(self, device, payload["value"], Devices)
+                # unit = self.mqtt_unit_map[device]
 
-                if api.cclass.multilevel_switch in device:
-                    nValue = 2 if payload["value"] > 0 else 0
-                    sValue = str(payload["value"])
-                    Devices[unit].Update(nValue=nValue, sValue=sValue)
-                elif api.cclass.binary_switch in device:
-                    nValue = 1 if payload["value"] else 0
-                    sValue = "On" if payload["value"] else "Off"
-                    Devices[unit].Update(nValue=nValue, sValue=sValue)
-                
-                
+                # if api.cclass.multilevel_switch in device:
+                #     nValue = 2 if payload["value"] > 0 else 0
+                #     sValue = str(payload["value"])
+                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
+                # elif api.cclass.binary_switch in device:
+                #     nValue = 1 if payload["value"] else 0
+                #     sValue = "On" if payload["value"] else "Off"
+                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
+
+                # elif api.cclass.multilevel_sensor in device:
+                #     nValue = int(payload["value"])
+                #     sValue = str(payload["value"])
+                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
+            
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Log(
-            "onCommand called for Unit "
-            + str(Unit)
-            + ": Parameter '"
-            + str(Command)
-            + "', Level: "
-            + str(Level)
-        )
+        # Domoticz.Log(
+        #     "onCommand called for Unit "
+        #     + str(Unit)
+        #     + ": Parameter '"
+        #     + str(Command)
+        #     + "', Level: "
+        #     + str(Level)
+        # )
 
         importlib.reload(api.command)
         api.command.OnCommand(self.mqttConn, Devices[Unit].DeviceID, Command, Level, Hue)
@@ -152,31 +162,32 @@ class BasePlugin:
         
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        Domoticz.Log(
-            "Notification: "
-            + Name
-            + ","
-            + Subject
-            + ","
-            + Text
-            + ","
-            + Status
-            + ","
-            + str(Priority)
-            + ","
-            + Sound
-            + ","
-            + ImageFile
-        )
+        # Domoticz.Log(
+        #     "Notification: "
+        #     + Name
+        #     + ","
+        #     + Subject
+        #     + ","
+        #     + Text
+        #     + ","
+        #     + Status
+        #     + ","
+        #     + str(Priority)
+        #     + ","
+        #     + Sound
+        #     + ","
+        #     + ImageFile
+        # )
+        pass
 
     def onDisconnect(self, Connection):
         Domoticz.Log("onDisconnect called")
 
     def onHeartbeat(self):
-        Domoticz.Log("onHeartbeat called")
+        # Domoticz.Log("onHeartbeat called")
 
         if self.counter == 6:
-            Domoticz.Log("Sending PING")
+            # Domoticz.Log("Sending PING")
             self.mqttConn.Send({"Verb": "PING"})
             self.counter = 0
         else:
