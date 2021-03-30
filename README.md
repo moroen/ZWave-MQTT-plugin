@@ -26,4 +26,7 @@ Devices will be added to domoticz on the first status change. To add a device to
 - 49 Sensor multilevel
     - Illumination
     - Power (Usage)
+- 50 Meter
+    - Power (Usage)
+    - Power (Accumulated)
 - 91 Central scene

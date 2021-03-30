@@ -1,5 +1,9 @@
-import Domoticz
-from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller
+try:
+    import Domoticz
+except ModuleNotFoundError:
+    pass
+
+from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller, meter, meter_usage, meter_usage_acummulated
 
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
@@ -12,6 +16,12 @@ def find_device_id(device_id):
 def find_device_and_type(device_id):
     if scene_controller in device_id:
         return device_id, "scene"
+    elif meter_usage in device_id:
+        i = device_id.find("/value")
+        return device_id[:i]+device_id[i+6:] if i > -1 else device_id, "Power"
+    elif meter_usage_acummulated in device_id:
+        i = device_id.find("/value")
+        return device_id[:i]+device_id[i+6:] if i > -1 else device_id, "Power-Accumulated"
     else:
         i = device_id.rfind("/")
         return device_id[:i] if i > -1 else None, device_id[i+1:] if i > -1 else None
@@ -56,7 +66,30 @@ def registerDevice(plugin, device_id, device_type, new_unit_id):
             # Switchtype=7,
             DeviceID=device_id,
         ).Create()
-    
+    elif meter in device_id:
+        if device_type == "Power-Accumulated":
+            Domoticz.Device(
+                Name=device_id,
+                Unit=new_unit_id,
+                TypeName="kWh",
+                # Type=244,
+                # Subtype=73,
+                # Switchtype=7,
+                DeviceID=device_id,
+            ).Create()
+        elif device_type == "Power":
+            Domoticz.Device(
+                Name=device_id,
+                Unit=new_unit_id,
+                TypeName="Usage",
+                # Type=244,
+                # Subtype=73,
+                # Switchtype=7,
+                DeviceID=device_id,
+            ).Create()
+        else:  # Unknown meter type
+            return False
+
     elif multilevel_sensor in device_id:
         if device_type == "Illuminance":
             Domoticz.Device(
@@ -114,7 +147,7 @@ def updateDevice(plugin, device, value, Devices):
         sValue = "On" if value else "Off"
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
-    elif multilevel_sensor in device:
+    elif (multilevel_sensor in device) or (meter in device):
         nValue = int(value)
         sValue = str(value)
         Devices[unit].Update(nValue=nValue, sValue=sValue)

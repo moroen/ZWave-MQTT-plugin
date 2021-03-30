@@ -116,6 +116,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/+/91/#", "QoS": 0},
                         {"Topic": "zwave/+/91/#", "QoS": 0},
+                        {"Topic": "zwave/+/+/50/#", "QoS": 0},
+                        {"Topic": "zwave/+/50/#", "QoS": 0},
                     ],
                 }
             )
