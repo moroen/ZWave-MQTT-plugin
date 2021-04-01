@@ -166,7 +166,7 @@ def updateDevice(plugin, device, device_type, value, Devices):
 
     elif (meter in device):
         sValue = Devices[unit].sValue
-        print("Old sValue: {}".format(sValue))
+        # print("Old sValue: {}".format(sValue))
         if device_type == meter_usage:
             current = sValue.split(";")
             sValue = str(value) + ";" + current[1]
@@ -176,7 +176,7 @@ def updateDevice(plugin, device, device_type, value, Devices):
         else:
             sValue = str(value)
         
-        print("New sValue: {}".format(sValue))
+        # print("New sValue: {}".format(sValue))
         nValue = 0
         
         Devices[unit].Update(nValue=nValue, sValue=sValue)
