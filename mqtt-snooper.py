@@ -3,8 +3,11 @@
 import paho.mqtt.client as mqtt
 import argparse
 import api.devices
+from datetime import datetime
+
 
 _translate = False
+_topic = "zwave/#"
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
@@ -12,11 +15,11 @@ def on_connect(client, userdata, flags, rc):
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    client.subscribe("zwave/#")
+    client.subscribe(_topic)
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(msg.topic+" "+str(msg.payload))
+    print("{} {} {}".format(datetime.now().strftime("%H:%M:%S"), msg.topic, str(msg.payload)))
     if _translate:
         dev, devtype = api.devices.find_device_and_type(msg.topic)
         print("{} -> {}".format(dev, devtype))
@@ -35,7 +38,9 @@ def get_args():
 
     parser.add_argument("IP")
 
-    parser.add_argument("-t", dest="translate", action="store_true")
+    parser.add_argument("-v", dest="translate", action="store_true")
+
+    parser.add_argument("--topic", dest="topic", action="store")
 
     return parser.parse_args()
 
@@ -46,4 +51,8 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     _translate = args.translate
+
+    if args.topic is not None:
+        _topic=args.topic
+
     mqtt_snooper(str(args.IP)).loop_forever()

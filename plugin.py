@@ -132,7 +132,7 @@ class BasePlugin:
                         # Unable to register the new device, ignore
                         return
 
-                api.devices.updateDevice(self, device, payload.get("value"), Devices)
+                api.devices.updateDevice(self, device, device_type, payload.get("value"), Devices)
                 # unit = self.mqtt_unit_map[device]
 
                 # if api.cclass.multilevel_switch in device:

@@ -3,7 +3,8 @@ try:
 except ModuleNotFoundError:
     pass
 
-from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller, meter, meter_usage, meter_usage_acummulated
+from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller
+from .cclass import meter, meter_usage, meter_usage_acummulated, meter_usage_ampere, meter_usage_volt
 
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
@@ -16,12 +17,13 @@ def find_device_id(device_id):
 def find_device_and_type(device_id):
     if scene_controller in device_id:
         return device_id, "scene"
-    elif meter_usage in device_id:
+    elif meter in device_id:
         i = device_id.find("/value")
-        return device_id[:i]+device_id[i+6:] if i > -1 else device_id, "Power"
-    elif meter_usage_acummulated in device_id:
-        i = device_id.find("/value")
-        return device_id[:i]+device_id[i+6:] if i > -1 else device_id, "Power-Accumulated"
+
+        if meter_usage_acummulated in device_id:
+            return device_id[:i+1]+meter_usage, meter_usage_acummulated
+        else:
+            return device_id[:i]+device_id[i+6:] if i > -1 else device_id, device_id[i+7:] if i > -1 else None
     else:
         i = device_id.rfind("/")
         return device_id[:i] if i > -1 else None, device_id[i+1:] if i > -1 else None
@@ -67,7 +69,7 @@ def registerDevice(plugin, device_id, device_type, new_unit_id):
             DeviceID=device_id,
         ).Create()
     elif meter in device_id:
-        if device_type == "Power-Accumulated":
+        if (device_type == meter_usage) or (device_type == meter_usage_acummulated):
             Domoticz.Device(
                 Name=device_id,
                 Unit=new_unit_id,
@@ -77,11 +79,21 @@ def registerDevice(plugin, device_id, device_type, new_unit_id):
                 # Switchtype=7,
                 DeviceID=device_id,
             ).Create()
-        elif device_type == "Power":
+        elif device_type == meter_usage_ampere:
             Domoticz.Device(
                 Name=device_id,
                 Unit=new_unit_id,
-                TypeName="Usage",
+                TypeName="Current (Single)",
+                # Type=244,
+                # Subtype=73,
+                # Switchtype=7,
+                DeviceID=device_id,
+            ).Create()
+        elif device_type == meter_usage_volt:
+            Domoticz.Device(
+                Name=device_id,
+                Unit=new_unit_id,
+                TypeName="Voltage",
                 # Type=244,
                 # Subtype=73,
                 # Switchtype=7,
@@ -133,7 +145,7 @@ def registerDevice(plugin, device_id, device_type, new_unit_id):
     plugin.mqtt_unit_map[device_id] = new_unit_id
     return True
 
-def updateDevice(plugin, device, value, Devices):
+def updateDevice(plugin, device, device_type, value, Devices):
 
     unit = plugin.mqtt_unit_map[device]
 
@@ -147,9 +159,26 @@ def updateDevice(plugin, device, value, Devices):
         sValue = "On" if value else "Off"
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
-    elif (multilevel_sensor in device) or (meter in device):
+    elif (multilevel_sensor in device):
         nValue = int(value)
         sValue = str(value)
+        Devices[unit].Update(nValue=nValue, sValue=sValue)
+
+    elif (meter in device):
+        sValue = Devices[unit].sValue
+        print("Old sValue: {}".format(sValue))
+        if device_type == meter_usage:
+            current = sValue.split(";")
+            sValue = str(value) + ";" + current[1]
+        elif device_type == meter_usage_acummulated:
+            current = sValue.split(";")
+            sValue = current[0] + ";" + str(value * 1000)
+        else:
+            sValue = str(value)
+        
+        print("New sValue: {}".format(sValue))
+        nValue = 0
+        
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
     elif scene_controller in device:
