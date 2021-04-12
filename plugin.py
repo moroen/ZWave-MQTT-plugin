@@ -39,9 +39,10 @@ import importlib
 
 import json
 
-import api.cclass
-import api.command
+from uuid import getnode
 import api.devices
+
+
 class mqtt_device:
     pass
 
@@ -49,7 +50,7 @@ class mqtt_device:
 class BasePlugin:
     enabled = False
     mqttConn = None
-    mqtt_devices = {}
+    # mqtt_devices = {}
     mqtt_unit_map = {}
 
     def __init__(self):
@@ -63,7 +64,7 @@ class BasePlugin:
         Domoticz.Debugging(0)
 
         importlib.reload(api.devices)
-        self.mqtt_devices = api.devices.indexRegisteredDevices(self, Devices)
+        api.devices.indexRegisteredDevices(self, Devices)
 
         self.mqttConn = Domoticz.Connection(
             Name="MQTT Test",
@@ -81,7 +82,7 @@ class BasePlugin:
         # Domoticz.Log("onConnect called")
         if Status == 0:
             Domoticz.Debug("MQTT connected successfully.")
-            sendData = {"Verb": "CONNECT", "ID": "645364363"}
+            sendData = {"Verb": "CONNECT", "ID": getnode()}
             Connection.Send(sendData)
         else:
             Domoticz.Log(
@@ -122,33 +123,28 @@ class BasePlugin:
                 }
             )
         elif Data["Verb"] == "PUBLISH":
-            
-            device, device_type = api.devices.find_device_and_type(Data["Topic"])
-            payload = json.loads(Data["Payload"].decode("utf-8"))
+
+            device, command_class, device_type, payload = api.devices.parse_topic(
+                Data["Topic"], Data["Payload"]
+            )
+            # device, device_type = api.devices.find_device_and_type(Data["Topic"])
+            # payload = json.loads(Data["Payload"].decode("utf-8"))
+
+            print(
+                "Device: {}\nCommand_class: {}\nType: {}\nPayload: {}\n".format(
+                    device, command_class, device_type, payload
+                )
+            )
 
             if device is not None:
-                if device not in self.mqtt_devices:
-                    if not api.devices.registerDevice(self, device, device_type, firstFree()):
+                if device not in self.mqtt_unit_map:
+                    if not api.devices.registerDevice(
+                        self, Data["Topic"], self.firstFree()
+                    ):
                         # Unable to register the new device, ignore
                         return
 
-                api.devices.updateDevice(self, device, device_type, payload.get("value"), Devices)
-                # unit = self.mqtt_unit_map[device]
-
-                # if api.cclass.multilevel_switch in device:
-                #     nValue = 2 if payload["value"] > 0 else 0
-                #     sValue = str(payload["value"])
-                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
-                # elif api.cclass.binary_switch in device:
-                #     nValue = 1 if payload["value"] else 0
-                #     sValue = "On" if payload["value"] else "Off"
-                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
-
-                # elif api.cclass.multilevel_sensor in device:
-                #     nValue = int(payload["value"])
-                #     sValue = str(payload["value"])
-                #     Devices[unit].Update(nValue=nValue, sValue=sValue)
-            
+                api.devices.updateDevice(self, Devices, Data["Topic"], Data["Payload"])
 
     def onCommand(self, Unit, Command, Level, Hue):
         # Domoticz.Log(
@@ -160,10 +156,10 @@ class BasePlugin:
         #     + str(Level)
         # )
 
-        importlib.reload(api.command)
-        api.command.OnCommand(self.mqttConn, Devices[Unit].DeviceID, Command, Level, Hue)
-
-        
+        importlib.reload(api.devices)
+        api.devices.OnCommand(
+            self.mqttConn, Devices[Unit].DeviceID, Command, Level, Hue
+        )
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         # Domoticz.Log(
@@ -196,6 +192,12 @@ class BasePlugin:
             self.counter = 0
         else:
             self.counter = self.counter + 1
+
+    def firstFree(self):
+        for num in range(1, 250):
+            if num not in Devices:
+                return num
+        return
 
 
 global _plugin
@@ -243,17 +245,12 @@ def onHeartbeat():
 
 
 # Generic helper functions
-def firstFree():
-    for num in range(1, 250):
-        if num not in Devices:
-            return num
-    return
 
 
 def DumpConfigToLog():
     for x in Parameters:
         if Parameters[x] != "":
-            Domoticz.Debug( "'" + x + "':'" + str(Parameters[x]) + "'")
+            Domoticz.Debug("'" + x + "':'" + str(Parameters[x]) + "'")
     Domoticz.Debug("Device count: " + str(len(Devices)))
     for x in Devices:
         Domoticz.Debug("Device:           " + str(x) + " - " + str(Devices[x]))
@@ -264,31 +261,36 @@ def DumpConfigToLog():
         Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
     return
 
+
 def DumpDictionaryToLog(theDict, Depth=""):
     if isinstance(theDict, dict):
         for x in theDict:
             if isinstance(theDict[x], dict):
-                Domoticz.Log(Depth+"> Dict '"+x+"' ("+str(len(theDict[x]))+"):")
-                DumpDictionaryToLog(theDict[x], Depth+"---")
+                Domoticz.Log(
+                    Depth + "> Dict '" + x + "' (" + str(len(theDict[x])) + "):"
+                )
+                DumpDictionaryToLog(theDict[x], Depth + "---")
             elif isinstance(theDict[x], list):
-                Domoticz.Log(Depth+"> List '"+x+"' ("+str(len(theDict[x]))+"):")
-                DumpListToLog(theDict[x], Depth+"---")
+                Domoticz.Log(
+                    Depth + "> List '" + x + "' (" + str(len(theDict[x])) + "):"
+                )
+                DumpListToLog(theDict[x], Depth + "---")
             elif isinstance(theDict[x], str):
-                Domoticz.Log(Depth+">'" + x + "':'" + str(theDict[x]) + "'")
+                Domoticz.Log(Depth + ">'" + x + "':'" + str(theDict[x]) + "'")
             else:
-                Domoticz.Log(Depth+">'" + x + "': " + str(theDict[x]))
+                Domoticz.Log(Depth + ">'" + x + "': " + str(theDict[x]))
+
 
 def DumpListToLog(theList, Depth):
     if isinstance(theList, list):
         for x in theList:
             if isinstance(x, dict):
-                Domoticz.Log(Depth+"> Dict ("+str(len(x))+"):")
-                DumpDictionaryToLog(x, Depth+"---")
+                Domoticz.Log(Depth + "> Dict (" + str(len(x)) + "):")
+                DumpDictionaryToLog(x, Depth + "---")
             elif isinstance(x, list):
-                Domoticz.Log(Depth+"> List ("+str(len(theList))+"):")
-                DumpListToLog(x, Depth+"---")
+                Domoticz.Log(Depth + "> List (" + str(len(theList)) + "):")
+                DumpListToLog(x, Depth + "---")
             elif isinstance(x, str):
-                Domoticz.Log(Depth+">'" + x + "':'" + str(theList[x]) + "'")
+                Domoticz.Log(Depth + ">'" + x + "':'" + str(theList[x]) + "'")
             else:
-                Domoticz.Log(Depth+">'" + x + "': " + str(theList[x]))
-
+                Domoticz.Log(Depth + ">'" + x + "': " + str(theList[x]))

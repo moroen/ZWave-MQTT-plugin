@@ -7,22 +7,32 @@ from datetime import datetime
 
 
 _translate = False
+_clear = False
 _topic = "zwave/#"
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code "+str(rc))
+    print("Connected with result code " + str(rc))
 
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     client.subscribe(_topic)
 
+
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print("{} {} {}".format(datetime.now().strftime("%H:%M:%S"), msg.topic, str(msg.payload)))
+    print(
+        "{} {} {}".format(
+            datetime.now().strftime("%H:%M:%S"), msg.topic, str(msg.payload)
+        )
+    )
     if _translate:
         dev, devtype = api.devices.find_device_and_type(msg.topic)
         print("{} -> {}".format(dev, devtype))
+
+    if _clear:
+        print("Clearing topic: {}".format(msg.topic))
+        client.publish(msg.topic, payload=None, qos=0, retain=True)
 
 
 def mqtt_snooper(ip):
@@ -33,6 +43,7 @@ def mqtt_snooper(ip):
     client.connect(ip, 1883, 60)
     return client
 
+
 def get_args():
     parser = argparse.ArgumentParser()
 
@@ -41,8 +52,10 @@ def get_args():
     parser.add_argument("-v", dest="translate", action="store_true")
 
     parser.add_argument("--topic", dest="topic", action="store")
+    parser.add_argument("--clear", dest="clear", action="store_true")
 
     return parser.parse_args()
+
 
 # Blocking call that processes network traffic, dispatches callbacks and
 # handles reconnecting.
@@ -51,8 +64,12 @@ def get_args():
 if __name__ == "__main__":
     args = get_args()
     _translate = args.translate
+    _clear = args.clear
 
     if args.topic is not None:
-        _topic=args.topic
+        _topic = args.topic
 
-    mqtt_snooper(str(args.IP)).loop_forever()
+    try:
+        mqtt_snooper(str(args.IP)).loop_forever()
+    except KeyboardInterrupt:
+        quit()

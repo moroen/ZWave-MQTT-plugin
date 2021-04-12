@@ -3,30 +3,62 @@ try:
 except ModuleNotFoundError:
     pass
 
-from .cclass import multilevel_switch, binary_switch, multilevel_sensor, scene_controller
-from .cclass import meter, meter_usage, meter_usage_acummulated, meter_usage_ampere, meter_usage_volt
+from typing import NoReturn
+from .device_types import (
+    multilevel_switch,
+    binary_switch,
+    multilevel_sensor,
+    scene_controller,
+    meter,
+    meter_usage,
+    meter_usage_acummulated,
+    meter_usage_ampere,
+    meter_usage_volt,
+    device_types,
+    get_typedef,
+    get_humidity_level,
+)
+
+from json import loads
+
 
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
-    return device_id[i+1:] if i > -1 else None
+    return device_id[i + 1 :] if i > -1 else None
+
 
 def find_device_id(device_id):
     i = device_id.rfind("/")
     return device_id[:i] if i > -1 else None
 
-def find_device_and_type(device_id):
-    if scene_controller in device_id:
-        return device_id, "scene"
-    elif meter in device_id:
-        i = device_id.find("/value")
 
-        if meter_usage_acummulated in device_id:
-            return device_id[:i+1]+meter_usage, meter_usage_acummulated
+def parse_topic(topic, payload=None):
+    if scene_controller in topic:
+        return topic, scene_controller, "scene", payload
+    elif meter in topic:
+        command_class = meter
+        i = topic.find("/value")
+
+        if meter_usage_acummulated in topic:
+            device_id = topic[: i + 1] + meter_usage
+            device_type = meter_usage_acummulated
         else:
-            return device_id[:i]+device_id[i+6:] if i > -1 else device_id, device_id[i+7:] if i > -1 else None
+            device_id = topic[:i] + topic[i + 6 :] if i > -1 else topic
+            device_type = topic[i + 7 :] if i > -1 else None
     else:
+        i = topic.rfind("/")
+        device_id = topic[:i] if i > -1 else None
+        device_type = topic[i + 1 :] if i > -1 else None
+
         i = device_id.rfind("/")
-        return device_id[:i] if i > -1 else None, device_id[i+1:] if i > -1 else None
+        j = device_id.rfind("/", 0, i)
+
+        command_class = device_id[j : i + 1]
+
+    if payload is not None:
+        payload = loads(payload.decode("utf-8"))
+
+    return device_id, command_class, device_type, payload
 
 
 def indexRegisteredDevices(plugin, Devices):
@@ -40,150 +72,188 @@ def indexRegisteredDevices(plugin, Devices):
             plugin.mqtt_unit_map[dev_id] = aUnit
 
         # print(plugin.mqtt_unit_map)
-        return [dev.DeviceID for key, dev in Devices.items()]
+        # return [dev.DeviceID for key, dev in Devices.items()]
+    # else:
+
+    #     return deviceID
+
+
+def registerDevice(plugin, topic, new_unit_id):
+
+    device_id, command_class, device_type, _ = parse_topic(topic)
+
+    Domoticz.Log(
+        "Registering device {} as unit {} with type {}".format(
+            device_id, new_unit_id, device_type
+        )
+    )
+
+    typedef = get_typedef(command_class, device_type)
+
+    if typedef is not None:
+        Domoticz.Device(
+            Name=device_id,
+            Unit=new_unit_id,
+            TypeName=typedef["Type"],
+            # Type=244,
+            # Subtype=73,
+            # Switchtype=7,
+            DeviceID=device_id,
+        ).Create()
+
+        # Map the added device
+        # plugin.mqtt_devices.append(device_id)
+        plugin.mqtt_unit_map[device_id] = new_unit_id
+        return True
     else:
-        deviceID = [-1]
-        return deviceID
-
-def registerDevice(plugin, device_id, device_type, new_unit_id):
-    Domoticz.Log("Registering device {} with type {}".format(device_id, device_type))
-    if multilevel_switch in device_id:
-        Domoticz.Device(
-            Name=device_id,
-            Unit=new_unit_id,
-            TypeName="Dimmer",
-            # Type=244,
-            # Subtype=73,
-            # Switchtype=7,
-            DeviceID=device_id,
-        ).Create()
-
-    elif binary_switch in device_id:
-        Domoticz.Device(
-            Name=device_id,
-            Unit=new_unit_id,
-            TypeName="Switch",
-            # Type=244,
-            # Subtype=73,
-            # Switchtype=7,
-            DeviceID=device_id,
-        ).Create()
-    elif meter in device_id:
-        if (device_type == meter_usage) or (device_type == meter_usage_acummulated):
-            Domoticz.Device(
-                Name=device_id,
-                Unit=new_unit_id,
-                TypeName="kWh",
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
-        elif device_type == meter_usage_ampere:
-            Domoticz.Device(
-                Name=device_id,
-                Unit=new_unit_id,
-                TypeName="Current (Single)",
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
-        elif device_type == meter_usage_volt:
-            Domoticz.Device(
-                Name=device_id,
-                Unit=new_unit_id,
-                TypeName="Voltage",
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
-        else:  # Unknown meter type
-            return False
-
-    elif multilevel_sensor in device_id:
-        if device_type == "Illuminance":
-            Domoticz.Device(
-                Name=device_id,
-                Unit=new_unit_id,
-                TypeName="Illumination",
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
-        elif device_type == "Power":
-            Domoticz.Device(
-                Name=device_id,
-                Unit=new_unit_id,
-                TypeName="Usage",
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
-        else:  # Unknown sensor type
-            return False
-    elif scene_controller in device_id:
-        Domoticz.Device(
-            Name=device_id,
-            Unit=new_unit_id,
-            TypeName="Push On",
-            # Type=244,
-            # Subtype=73,
-            # Switchtype=7,
-            DeviceID=device_id,
-        ).Create()
-
-    else:
-        # Unknown device
         return False
 
-    # Map the added device
-    plugin.mqtt_devices.append(device_id)
-    plugin.mqtt_unit_map[device_id] = new_unit_id
-    return True
 
-def updateDevice(plugin, device, device_type, value, Devices):
+def updateDevice(plugin, Devices, topic, mqtt_payload):
+    nValue = 0
+    sValue = ""
 
-    unit = plugin.mqtt_unit_map[device]
-
-    if multilevel_switch in device:
-        nValue = 2 if value > 0 else 0
-        sValue = str(value)
-        Devices[unit].Update(nValue=nValue, sValue=sValue)
-
-    elif binary_switch in device:
-        nValue = 1 if value else 0
-        sValue = "On" if value else "Off"
-        Devices[unit].Update(nValue=nValue, sValue=sValue)
-
-    elif (multilevel_sensor in device):
-        nValue = int(value)
-        sValue = str(value)
-        Devices[unit].Update(nValue=nValue, sValue=sValue)
-
-    elif (meter in device):
+    device_id, command_class, device_type, payload = parse_topic(topic, mqtt_payload)
+    unit = plugin.mqtt_unit_map[device_id]
+    try:
         sValue = Devices[unit].sValue
-        # print("Old sValue: {}".format(sValue))
-        if device_type == meter_usage:
-            current = sValue.split(";")
-            sValue = str(value) + ";" + current[1]
-        elif device_type == meter_usage_acummulated:
-            current = sValue.split(";")
-            sValue = current[0] + ";" + str(value * 1000)
-        else:
-            sValue = str(value)
-        
-        # print("New sValue: {}".format(sValue))
-        nValue = 0
-        
+    except KeyError:
+        # The mapped unit doesn't exist, probably deleted..
+        Domoticz.Error(
+            "Failed to update device {}, unit {} not found.".format(device_id, unit)
+        )
+        del plugin.mqtt_unit_map[device_id]
+        registerDevice(plugin, topic, plugin.firstFree())
+        updateDevice(plugin, Devices, topic, mqtt_payload)
+        return
+
+    # Combine TEMP and Humidity if same unit reports both
+    if device_type == "Air_temperature" and Devices[unit].Type == 81:
+        Domoticz.Log(
+            "Changing unit {} from humidity to Temp+Hum".format(
+                unit, device_id, device_type, payload
+            )
+        )
+        sValue = "{};{};{}".format(
+            payload["value"],
+            Devices[unit].nValue,
+            get_humidity_level(Devices[unit].nValue),
+        )
+        Devices[unit].Update(nValue=0, sValue=sValue, TypeName="Temp+Hum")
+        return
+
+    elif device_type == "Humidity" and Devices[unit].Type == 80:
+        Domoticz.Log(
+            "Changing unit {} from temperature to Temp+Hum".format(
+                unit, device_id, device_type, payload
+            )
+        )
+        sValue = "{};{};{}".format(
+            Devices[unit].sValue, payload["value"], get_humidity_level(payload["value"])
+        )
+        Devices[unit].Update(nValue=0, sValue=sValue, TypeName="Temp+Hum")
+        return
+
+    if Devices[unit].Type == 82:  # This is a combined sensor temp + hum sensor
+        device_type = "Humidity_combined" if device_type == "Humidity" else device_type
+        device_type = (
+            "Air_temperature_combined"
+            if device_type == "Air_temperature"
+            else device_type
+        )
+
+    Domoticz.Log(
+        "Updating unit {} as device {} of type {} with {}".format(
+            unit, device_id, device_type, payload
+        )
+    )
+
+    typedef = get_typedef(command_class, device_type)
+
+    if typedef is not None:
+        Domoticz.Log("Updating with typedef: {}".format(typedef))
+
+        if typedef["Type"] == "Scene":
+            Devices[unit].Update(nValue=1, sValue="On")
+            return
+
+        # nValue
+        if typedef["nValue"] == 0:
+            nValue = 0
+        elif typedef["nValue"] == 1:
+            nValue = 0 if payload["value"] == 0 else 1
+        elif typedef["nValue"] == 2:
+            nValue = 0 if payload["value"] == 0 else 2
+        elif typedef["nValue"] == "value":
+            nValue = int(payload["value"])
+
+        # sValue
+        if typedef["sValue"] == "value":
+            sValue = str(payload["value"])
+        elif typedef["sValue"] == "value;":
+            i = sValue.find(";")
+            sValue = (
+                str(payload["value"] * typedef["factor"]) + sValue[i:]
+                if i > -1
+                else sValue
+            )
+
+        elif typedef["sValue"] == ";value":
+            i = sValue.find(";")
+            sValue = (
+                sValue[:i] + str(payload["value"] * typedef["factor"])
+                if i > -1
+                else sValue
+            )
+        elif typedef["sValue"] == ";value;hum":
+            i = sValue.find(";")
+            sValue = (
+                sValue[:i]
+                + ";"
+                + str(payload["value"] * typedef["factor"])
+                + ";"
+                + get_humidity_level(payload["value"])
+            )
+
+        elif typedef["sValue"] == "OnOff":
+            sValue = "On" if payload["value"] else "Off"
+        elif typedef["sValue"] == "humidity_level":
+            sValue = get_humidity_level(payload["value"])
+
+        Domoticz.Log("nValue: {} sValue: {}".format(nValue, sValue))
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
-    elif scene_controller in device:
-        if value is not None:
-            nValue = 1
-            sValue = "On"
-            Devices[unit].Update(nValue=nValue, sValue=sValue)
-            
+
+def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
+    payload = ""
+
+    if scene_controller in DeviceID:
+        # Scene controllers are handeled internaly
+        print("Scene Controller clicked")
+        return
+
+    if Command == "On":
+        if multilevel_switch in DeviceID:
+            payload = '{{"value": {}}}'.format(255)
+        elif binary_switch in DeviceID:
+            payload = '{{"value": true}'
+
+    elif Command == "Off":
+        if multilevel_switch in DeviceID:
+            payload = '{"value": 0}'
+        elif binary_switch in DeviceID:
+            payload = '{"value": false}'
+
+    elif Command == "Set Level":
+        if multilevel_switch in DeviceID:
+            payload = '{{"value": {}}}'.format(Level)
+
+    mqttConn.Send(
+        {
+            "Verb": "PUBLISH",
+            "QoS": 1,
+            "PacketIdentifier": 1001,
+            "Topic": "{}/targetValue/set".format(DeviceID),
+            "Payload": payload,
+        }
+    )
