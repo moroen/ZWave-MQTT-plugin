@@ -29,4 +29,6 @@ Devices will be added to domoticz on the first status change. To add a device to
 - 50 Meter
     - Power (Usage)
     - Power (Accumulated)
+    - Electric (Current)
+    - Electric (Volt)
 - 91 Central scene
