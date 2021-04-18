@@ -4,6 +4,7 @@ from Domoticz import Log, Error
 multilevel_switch = "/38/"
 binary_switch = "/37/"
 multilevel_sensor = "/49/"
+binary_sensor = "/48/"
 scene_controller = "/91/"
 
 meter = "/50/"
@@ -30,6 +31,11 @@ device_types[multilevel_switch] = {
 device_types[binary_switch] = {
     "currentValue": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"}
 }
+
+device_types[binary_sensor] = {
+    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"}
+}
+
 device_types[multilevel_sensor] = {
     "Illuminance": {
         "Type": "Illumination",

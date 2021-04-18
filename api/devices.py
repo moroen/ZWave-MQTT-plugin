@@ -82,7 +82,7 @@ def registerDevice(plugin, topic, new_unit_id):
 
     device_id, command_class, device_type, _ = parse_topic(topic)
 
-    Domoticz.Log(
+    Domoticz.Debug(
         "Registering device {} as unit {} with type {}".format(
             device_id, new_unit_id, device_type
         )
@@ -129,7 +129,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
 
     # Combine TEMP and Humidity if same unit reports both
     if device_type == "Air_temperature" and Devices[unit].Type == 81:
-        Domoticz.Log(
+        Domoticz.Debug(
             "Changing unit {} from humidity to Temp+Hum".format(
                 unit, device_id, device_type, payload
             )
@@ -143,7 +143,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         return
 
     elif device_type == "Humidity" and Devices[unit].Type == 80:
-        Domoticz.Log(
+        Domoticz.Debug(
             "Changing unit {} from temperature to Temp+Hum".format(
                 unit, device_id, device_type, payload
             )
@@ -162,7 +162,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             else device_type
         )
 
-    Domoticz.Log(
+    Domoticz.Debug(
         "Updating unit {} as device {} of type {} with {}".format(
             unit, device_id, device_type, payload
         )
@@ -171,7 +171,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
     typedef = get_typedef(command_class, device_type)
 
     if typedef is not None:
-        Domoticz.Log("Updating with typedef: {}".format(typedef))
+        Domoticz.Debug("Updating with typedef: {}".format(typedef))
 
         if typedef["Type"] == "Scene":
             Devices[unit].Update(nValue=1, sValue="On")
@@ -220,7 +220,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         elif typedef["sValue"] == "humidity_level":
             sValue = get_humidity_level(payload["value"])
 
-        Domoticz.Log("nValue: {} sValue: {}".format(nValue, sValue))
+        Domoticz.Debug("nValue: {} sValue: {}".format(nValue, sValue))
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
 
@@ -229,7 +229,7 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
 
     if scene_controller in DeviceID:
         # Scene controllers are handeled internaly
-        print("Scene Controller clicked")
+        # print("Scene Controller clicked")
         return
 
     if Command == "On":

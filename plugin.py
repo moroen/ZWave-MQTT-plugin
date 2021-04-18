@@ -1,31 +1,26 @@
-# Basic Python Plugin Example
+# Plugin for using zwavejs2mqtt as a zwave interface
 #
-# Author: GizMoCuz
+# Author: moroen
 #
 """
-<plugin key="BasePlug" name="ZWave-MQTT" author="moroen" version="0.0.1" wikilink="http://www.domoticz.com/wiki/plugins/plugin.html" externallink="https://www.google.com/">
+<plugin key="BasePlug" name="ZWave-MQTT" author="moroen" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
     <description>
         <h2>Zwave MQTT</h2><br/>
-        Overview...
-        <h3>Features</h3>
-        <ul style="list-style-type:square">
-            <li>Feature one...</li>
-            <li>Feature two...</li>
-        </ul>
-        <h3>Devices</h3>
-        <ul style="list-style-type:square">
-            <li>Device Type - What it does...</li>
-        </ul>
-        <h3>Configuration</h3>
-        Configuration options...
     </description>
     <params>
-        <param field="Address" label="IP Address" width="200px" required="true" default="test.mosquitto.org"/>
+        <param field="Address" label="Broker Address" width="200px" required="true" default="test.mosquitto.org"/>
         <param field="Port" label="Connection" required="true" width="200px">
             <options>
                 <option label="Unencrypted" value="1883" default="true" />
                 <option label="Encrypted" value="8883" />
                 <option label="Encrypted (Client Certificate)" value="8884" />
+            </options>
+        </param>
+
+        <param field="Mode6" label="Debug" width="75px">
+            <options>
+                <option label="True" value="Debug"/>
+                <option label="False" value="Normal"  default="true" />
             </options>
         </param>
     </params>
@@ -61,9 +56,9 @@ class BasePlugin:
     def onStart(self):
         Domoticz.Log("onStart called")
 
-        Domoticz.Debugging(0)
-
-        importlib.reload(api.devices)
+        if Parameters["Mode6"] == "Debug":
+            Domoticz.Debugging(1)
+            
         api.devices.indexRegisteredDevices(self, Devices)
 
         self.mqttConn = Domoticz.Connection(
@@ -85,7 +80,7 @@ class BasePlugin:
             sendData = {"Verb": "CONNECT", "ID": getnode()}
             Connection.Send(sendData)
         else:
-            Domoticz.Log(
+            Domoticz.Error(
                 "Failed to connect ("
                 + str(Status)
                 + ") to: "
@@ -103,7 +98,7 @@ class BasePlugin:
         importlib.reload(api)
 
         if Data["Verb"] == "CONNACK":
-            Domoticz.Log("MQTT Connection accepted")
+            Domoticz.Debug("MQTT Connection accepted")
             self.mqttConn.Send(
                 {
                     "Verb": "SUBSCRIBE",
@@ -113,6 +108,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/+/38/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/+/37/+/currentValue", "QoS": 0},
+                        {"Topic": "zwave/+/+/48/#", "QoS": 0},
+                        {"Topic": "zwave/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/+/91/#", "QoS": 0},
@@ -130,11 +127,11 @@ class BasePlugin:
             # device, device_type = api.devices.find_device_and_type(Data["Topic"])
             # payload = json.loads(Data["Payload"].decode("utf-8"))
 
-            print(
-                "Device: {}\nCommand_class: {}\nType: {}\nPayload: {}\n".format(
-                    device, command_class, device_type, payload
-                )
-            )
+            # Domoticz.Debug(
+            #     "Device: {}\nCommand_class: {}\nType: {}\nPayload: {}\n".format(
+            #         device, command_class, device_type, payload
+            #     )
+            # )
 
             if device is not None:
                 if device not in self.mqtt_unit_map:

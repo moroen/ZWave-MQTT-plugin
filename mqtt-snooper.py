@@ -2,11 +2,8 @@
 
 import paho.mqtt.client as mqtt
 import argparse
-import api.devices
 from datetime import datetime
 
-
-_translate = False
 _clear = False
 _topic = "zwave/#"
 
@@ -26,9 +23,6 @@ def on_message(client, userdata, msg):
             datetime.now().strftime("%H:%M:%S"), msg.topic, str(msg.payload)
         )
     )
-    if _translate:
-        dev, devtype = api.devices.find_device_and_type(msg.topic)
-        print("{} -> {}".format(dev, devtype))
 
     if _clear:
         print("Clearing topic: {}".format(msg.topic))
@@ -48,9 +42,6 @@ def get_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("IP")
-
-    parser.add_argument("-v", dest="translate", action="store_true")
-
     parser.add_argument("--topic", dest="topic", action="store")
     parser.add_argument("--clear", dest="clear", action="store_true")
 
@@ -63,7 +54,6 @@ def get_args():
 # manual interface.
 if __name__ == "__main__":
     args = get_args()
-    _translate = args.translate
     _clear = args.clear
 
     if args.topic is not None:
