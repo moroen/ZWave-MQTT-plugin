@@ -23,6 +23,7 @@ Devices will be added to domoticz on the first status change. To add a device to
 ## Implemented command classes
 - 37 Switch binary
 - 38 Switch multilevel
+- 48 Sensor binary
 - 49 Sensor multilevel
     - Illumination
     - Power (Usage)
