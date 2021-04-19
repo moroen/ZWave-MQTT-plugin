@@ -112,6 +112,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
+                        {"Topic": "zwave/+/+/67/#", "QoS": 0},
+                        {"Topic": "zwave/+/67/#", "QoS": 0},
                         {"Topic": "zwave/+/+/91/#", "QoS": 0},
                         {"Topic": "zwave/+/91/#", "QoS": 0},
                         {"Topic": "zwave/+/+/50/#", "QoS": 0},
@@ -127,11 +129,15 @@ class BasePlugin:
             # device, device_type = api.devices.find_device_and_type(Data["Topic"])
             # payload = json.loads(Data["Payload"].decode("utf-8"))
 
-            # Domoticz.Debug(
+            # print(
             #     "Device: {}\nCommand_class: {}\nType: {}\nPayload: {}\n".format(
             #         device, command_class, device_type, payload
             #     )
             # )
+
+            if Data["Topic"][-4:] == "/set":
+                # Ingnore all set messages, the update should come from the result messages
+                return
 
             if device is not None:
                 if device not in self.mqtt_unit_map:

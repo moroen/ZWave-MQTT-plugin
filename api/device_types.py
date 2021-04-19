@@ -1,10 +1,11 @@
 from Domoticz import Log, Error
 
 # Command classes
-multilevel_switch = "/38/"
 binary_switch = "/37/"
-multilevel_sensor = "/49/"
+multilevel_switch = "/38/"
 binary_sensor = "/48/"
+multilevel_sensor = "/49/"
+thermostat = "/67/"
 scene_controller = "/91/"
 
 meter = "/50/"
@@ -26,14 +27,24 @@ device_types = {}
 
 
 device_types[multilevel_switch] = {
-    "currentValue": {"Type": "Dimmer", "nValue": 2, "sValue": "value"}
+    "currentValue": {"Type": "Dimmer", "nValue": 2, "sValue": "value", "state_topic": "/targetValue/set"}
 }
 device_types[binary_switch] = {
-    "currentValue": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"}
+    "currentValue": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "state_topic": "/targetValue/set"}
 }
 
 device_types[binary_sensor] = {
-    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"}
+    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "state_topic": "/targetValue/set"}
+}
+
+device_types[thermostat] = {
+    "setpoint/1": {
+        "Type": "Thermostat ",
+        "nValue": 0,
+        "sValue": "value",
+        "factor": 1,
+        "state_topic": "/set"
+    },
 }
 
 device_types[multilevel_sensor] = {

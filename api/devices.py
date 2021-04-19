@@ -17,6 +17,7 @@ from .device_types import (
     device_types,
     get_typedef,
     get_humidity_level,
+    thermostat
 )
 
 from json import loads
@@ -45,6 +46,16 @@ def parse_topic(topic, payload=None):
         else:
             device_id = topic[:i] + topic[i + 6 :] if i > -1 else topic
             device_type = topic[i + 7 :] if i > -1 else None
+    elif thermostat in topic:
+        
+        command_class = thermostat
+
+        device_id = topic
+        
+        i = topic.find("/setpoint")
+        
+        device_type = topic[i+1 :] 
+
     else:
         i = topic.rfind("/")
         device_id = topic[:i] if i > -1 else None
@@ -90,16 +101,28 @@ def registerDevice(plugin, topic, new_unit_id):
 
     typedef = get_typedef(command_class, device_type)
 
+    print("Typedef: {}".format(typedef))
+
     if typedef is not None:
-        Domoticz.Device(
-            Name=device_id,
-            Unit=new_unit_id,
-            TypeName=typedef["Type"],
-            # Type=244,
-            # Subtype=73,
-            # Switchtype=7,
-            DeviceID=device_id,
-        ).Create()
+        if typedef["Type"] == "Thermostat":
+            Domoticz.Device(
+                Name=device_id,
+                Unit=new_unit_id,
+                Type=242,
+                Subtype=1,
+                # Switchtype=7,
+                DeviceID=device_id,
+            ).Create()
+        else:
+            Domoticz.Device(
+                Name=device_id,
+                Unit=new_unit_id,
+                TypeName=typedef["Type"],
+                # Type=244,
+                # Subtype=73,
+                # Switchtype=7,
+                DeviceID=device_id,
+            ).Create()
 
         # Map the added device
         # plugin.mqtt_devices.append(device_id)
@@ -225,7 +248,14 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
 
 
 def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
-    payload = ""
+    # device_id, command_class, device_type, payload = parse_topic(DeviceID)
+    
+    # print(device_id, command_class, device_type)
+
+    payload = None
+    topic = None
+
+    print(Command, Level, Hue)
 
     if scene_controller in DeviceID:
         # Scene controllers are handeled internaly
@@ -233,12 +263,14 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
         return
 
     if Command == "On":
+        topic = "{}/targetValue/set".format(DeviceID)
         if multilevel_switch in DeviceID:
             payload = '{{"value": {}}}'.format(255)
         elif binary_switch in DeviceID:
             payload = '{{"value": true}'
 
     elif Command == "Off":
+        topic = "{}/targetValue/set".format(DeviceID)
         if multilevel_switch in DeviceID:
             payload = '{"value": 0}'
         elif binary_switch in DeviceID:
@@ -246,6 +278,10 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
 
     elif Command == "Set Level":
         if multilevel_switch in DeviceID:
+            topic = "{}/targetValue/set".format(DeviceID)
+            payload = '{{"value": {}}}'.format(Level)
+        if thermostat in DeviceID:
+            topic = "{}/set".format(DeviceID)
             payload = '{{"value": {}}}'.format(Level)
 
     mqttConn.Send(
@@ -253,7 +289,7 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
             "Verb": "PUBLISH",
             "QoS": 1,
             "PacketIdentifier": 1001,
-            "Topic": "{}/targetValue/set".format(DeviceID),
+            "Topic": topic,
             "Payload": payload,
         }
     )
