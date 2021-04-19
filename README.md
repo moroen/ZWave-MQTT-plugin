@@ -34,4 +34,7 @@ Devices will be added to domoticz on the first status change. To add a device to
     - Power (Accumulated)
     - Electric (Current)
     - Electric (Volt)
+- 67 Thermostat (experimental)
+    - setpoint/1 (Heat)
+    - setpoint/11 (Heat eco)
 - 91 Central scene
