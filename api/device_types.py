@@ -34,12 +34,30 @@ device_types[binary_switch] = {
 }
 
 device_types[binary_sensor] = {
-    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "state_topic": "/targetValue/set"}
+    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "state_topic": "/targetValue/set"},
+    "Door-Window": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 73,
+        "SwitchType": 11,
+        "nValue": 1, "sValue": "OnOff", "state_topic": "/targetValue/set"}
 }
+
 
 device_types[thermostat] = {
     "setpoint/1": {
-        "Type": "Thermostat ",
+        "Type": "DeviceType",
+        "DeviceType": 242,
+        "SubType": 1,
+        "nValue": 0,
+        "sValue": "value",
+        "factor": 1,
+        "state_topic": "/set"
+    },
+    "setpoint/11": {
+        "Type": "DeviceType",
+        "DeviceType": 242,
+        "SubType": 1,
         "nValue": 0,
         "sValue": "value",
         "factor": 1,

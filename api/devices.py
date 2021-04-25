@@ -34,6 +34,9 @@ def find_device_id(device_id):
 
 
 def parse_topic(topic, payload=None):
+    if payload is not None:
+        payload = loads(payload.decode("utf-8"))
+
     if scene_controller in topic:
         return topic, scene_controller, "scene", payload
     elif meter in topic:
@@ -65,9 +68,6 @@ def parse_topic(topic, payload=None):
         j = device_id.rfind("/", 0, i)
 
         command_class = device_id[j : i + 1]
-
-    if payload is not None:
-        payload = loads(payload.decode("utf-8"))
 
     return device_id, command_class, device_type, payload
 
@@ -104,12 +104,12 @@ def registerDevice(plugin, topic, new_unit_id):
     print("Typedef: {}".format(typedef))
 
     if typedef is not None:
-        if typedef["Type"] == "Thermostat":
+        if typedef["Type"] == "DeviceType":
             Domoticz.Device(
                 Name=device_id,
                 Unit=new_unit_id,
-                Type=242,
-                Subtype=1,
+                Type=typedef["DeviceType"],
+                Subtype=typedef["SubType"],
                 # Switchtype=7,
                 DeviceID=device_id,
             ).Create()
@@ -197,7 +197,9 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         Domoticz.Debug("Updating with typedef: {}".format(typedef))
 
         if typedef["Type"] == "Scene":
-            Devices[unit].Update(nValue=1, sValue="On")
+            if payload.get("value") is not None:
+                # zwavejs2mqtt reports a value if a scene button actually are pressed
+                Devices[unit].Update(nValue=1, sValue="On")
             return
 
         # nValue

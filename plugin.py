@@ -77,7 +77,9 @@ class BasePlugin:
         # Domoticz.Log("onConnect called")
         if Status == 0:
             Domoticz.Debug("MQTT connected successfully.")
-            sendData = {"Verb": "CONNECT", "ID": getnode()}
+            new_id = getnode()
+            print("Connecting with nodeid: {}".format(new_id))
+            sendData = {"Verb": "CONNECT", "ID": new_id}
             Connection.Send(sendData)
         else:
             Domoticz.Error(
@@ -112,8 +114,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
-                        {"Topic": "zwave/+/+/67/#", "QoS": 0},
-                        {"Topic": "zwave/+/67/#", "QoS": 0},
+                        {"Topic": "zwave/+/+/67/+/setpoint/+", "QoS": 0},
+                        {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
                         {"Topic": "zwave/+/+/91/#", "QoS": 0},
                         {"Topic": "zwave/+/91/#", "QoS": 0},
                         {"Topic": "zwave/+/+/50/#", "QoS": 0},
@@ -135,9 +137,9 @@ class BasePlugin:
             #     )
             # )
 
-            if Data["Topic"][-4:] == "/set":
-                # Ingnore all set messages, the update should come from the result messages
-                return
+            # if Data["Topic"][-4:] == "/set":
+            #     # Ingnore all set messages, the update should come from the result messages
+            #     return
 
             if device is not None:
                 if device not in self.mqtt_unit_map:
