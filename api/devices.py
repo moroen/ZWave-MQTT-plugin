@@ -220,15 +220,15 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             sValue = (
                 str(payload["value"] * typedef["factor"]) + sValue[i:]
                 if i > -1
-                else sValue
+                else str(payload["value"] * typedef["factor"]) + ";0"
             )
 
         elif typedef["sValue"] == ";value":
             i = sValue.find(";")
             sValue = (
-                sValue[:i] + str(payload["value"] * typedef["factor"])
+                sValue[:i] + ";" + str(payload["value"] * typedef["factor"])
                 if i > -1
-                else sValue
+                else "0;" + str(payload["value"])                
             )
         elif typedef["sValue"] == ";value;hum":
             i = sValue.find(";")
