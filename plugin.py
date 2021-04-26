@@ -58,7 +58,7 @@ class BasePlugin:
 
         if Parameters["Mode6"] == "Debug":
             Domoticz.Debugging(1)
-            
+
         api.devices.indexRegisteredDevices(self, Devices)
 
         self.mqttConn = Domoticz.Connection(
@@ -77,9 +77,7 @@ class BasePlugin:
         # Domoticz.Log("onConnect called")
         if Status == 0:
             Domoticz.Debug("MQTT connected successfully.")
-            new_id = getnode()
-            print("Connecting with nodeid: {}".format(new_id))
-            sendData = {"Verb": "CONNECT", "ID": new_id}
+            sendData = {"Verb": "CONNECT", "ID": str(getnode())}
             Connection.Send(sendData)
         else:
             Domoticz.Error(

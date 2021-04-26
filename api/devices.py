@@ -17,7 +17,7 @@ from .device_types import (
     device_types,
     get_typedef,
     get_humidity_level,
-    thermostat
+    thermostat,
 )
 
 from json import loads
@@ -50,14 +50,14 @@ def parse_topic(topic, payload=None):
             device_id = topic[:i] + topic[i + 6 :] if i > -1 else topic
             device_type = topic[i + 7 :] if i > -1 else None
     elif thermostat in topic:
-        
+
         command_class = thermostat
 
         device_id = topic
-        
+
         i = topic.find("/setpoint")
-        
-        device_type = topic[i+1 :] 
+
+        device_type = topic[i + 1 :]
 
     else:
         i = topic.rfind("/")
@@ -101,7 +101,7 @@ def registerDevice(plugin, topic, new_unit_id):
 
     typedef = get_typedef(command_class, device_type)
 
-    print("Typedef: {}".format(typedef))
+    # print("Typedef: {}".format(typedef))
 
     if typedef is not None:
         if typedef["Type"] == "DeviceType":
@@ -110,7 +110,7 @@ def registerDevice(plugin, topic, new_unit_id):
                 Unit=new_unit_id,
                 Type=typedef["DeviceType"],
                 Subtype=typedef["SubType"],
-                # Switchtype=7,
+                Switchtype=typedef["SwitchType"],
                 DeviceID=device_id,
             ).Create()
         else:
@@ -251,13 +251,13 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
 
 def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
     # device_id, command_class, device_type, payload = parse_topic(DeviceID)
-    
+
     # print(device_id, command_class, device_type)
 
     payload = None
     topic = None
 
-    print(Command, Level, Hue)
+    # print(Command, Level, Hue)
 
     if scene_controller in DeviceID:
         # Scene controllers are handeled internaly
