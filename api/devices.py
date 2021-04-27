@@ -166,11 +166,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         return
 
     elif device_type == "Humidity" and Devices[unit].Type == 80:
-        Domoticz.Debug(
-            "Changing unit {} from temperature to Temp+Hum".format(
-                unit, device_id, device_type, payload
-            )
-        )
+        Domoticz.Debug("Changing unit {} from temperature to Temp+Hum".format(unit))
         sValue = "{};{};{}".format(
             Devices[unit].sValue, payload["value"], get_humidity_level(payload["value"])
         )
@@ -228,7 +224,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             sValue = (
                 sValue[:i] + ";" + str(payload["value"] * typedef["factor"])
                 if i > -1
-                else "0;" + str(payload["value"])                
+                else "0;" + str(payload["value"])
             )
         elif typedef["sValue"] == ";value;hum":
             i = sValue.find(";")

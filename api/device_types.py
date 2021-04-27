@@ -120,7 +120,7 @@ device_types[multilevel_sensor] = {
 }
 
 device_types[meter] = {
-    meter_usage: {"Type": "kWh", "nValue": 0, "sValue": "value;", "factor": 1000},
+    meter_usage: {"Type": "kWh", "nValue": 0, "sValue": "value;", "factor": 1},
     meter_usage_acummulated: {
         "Type": "kWh",
         "nValue": 0,
