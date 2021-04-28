@@ -1,3 +1,5 @@
+[![Lint with black](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml/badge.svg)](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml)
+
 # ZWave-MQTT-plugin
 A domoticz plugin for zwave over MQTT
 
