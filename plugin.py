@@ -3,7 +3,7 @@
 # Author: moroen
 #
 """
-<plugin key="BasePlug" name="ZWave-MQTT" author="moroen" version="0.0.2" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
+<plugin key="BasePlug" name="ZWave-MQTT" author="moroen" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
     <description>
         <h2>Zwave MQTT</h2><br/>
     </description>
