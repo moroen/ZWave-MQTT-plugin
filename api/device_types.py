@@ -124,7 +124,11 @@ device_types[meter] = {
         "sValue": "value",
         "factor": 1,
     },
-    meter_usage_volt: {"Type": "Voltage", "nValue": 0, "sValue": "value", "factor": 1},
+    meter_usage_volt: {
+        "Type": "Voltage", 
+        "nValue": 0, 
+        "sValue": "value", 
+        "factor": 1},
 }
 
 device_types[scene_controller] = {
