@@ -9,10 +9,10 @@ thermostat = "/67/"
 scene_controller = "/91/"
 
 meter = "/50/"
-meter_usage = "66049"
-meter_usage_acummulated = "65537"
-meter_usage_volt = "66561"
-meter_usage_ampere = "66817"
+meter_usage = "value/66049"
+meter_usage_acummulated = "value/65537"
+meter_usage_volt = "value/66561"
+meter_usage_ampere = "value/66817"
 
 device_types = {}
 
@@ -25,13 +25,12 @@ device_types = {}
 # sValue 'value;' set first part of multipart string to value
 # sValue ';value' set second part of multipart string to value
 
-
 device_types[multilevel_switch] = {
     "currentValue": {
         "Type": "Dimmer",
         "nValue": 2,
         "sValue": "value",
-        "state_topic": "/targetValue/set",
+        "state_topic": "targetValue/set",
     }
 }
 device_types[binary_switch] = {
@@ -39,17 +38,12 @@ device_types[binary_switch] = {
         "Type": "Switch",
         "nValue": 1,
         "sValue": "OnOff",
-        "state_topic": "/targetValue/set",
+        "state_topic": "targetValue/set",
     }
 }
 
 device_types[binary_sensor] = {
-    "Any": {
-        "Type": "Switch",
-        "nValue": 1,
-        "sValue": "OnOff",
-        "state_topic": "/targetValue/set",
-    },
+    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"},
     "Door-Window": {
         "Type": "DeviceType",
         "DeviceType": 244,
@@ -57,7 +51,6 @@ device_types[binary_sensor] = {
         "SwitchType": 11,
         "nValue": 1,
         "sValue": "OnOff",
-        "state_topic": "/targetValue/set",
     },
 }
 
@@ -71,7 +64,6 @@ device_types[thermostat] = {
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
-        "state_topic": "/set",
     },
     "setpoint/11": {
         "Type": "DeviceType",
@@ -81,7 +73,6 @@ device_types[thermostat] = {
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
-        "state_topic": "/set",
     },
 }
 
@@ -137,7 +128,14 @@ device_types[meter] = {
 }
 
 device_types[scene_controller] = {
-    "scene": {"Type": "Scene", "nValue": 1, "sValue": "On"}
+    "scene": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 62,
+        "SwitchType": 9,
+        "nValue": 1,
+        "sValue": "OnOff",
+    }
 }
 
 

@@ -3,7 +3,6 @@ try:
 except ModuleNotFoundError:
     pass
 
-from typing import NoReturn
 from .device_types import (
     multilevel_switch,
     binary_switch,
@@ -21,6 +20,7 @@ from .device_types import (
 )
 
 from json import loads
+from re import T, search
 
 
 def find_sensor_type(device_id):
@@ -37,37 +37,24 @@ def parse_topic(topic, payload=None):
     if payload is not None:
         payload = loads(payload.decode("utf-8"))
 
+    if topic[:6] == "zwave/":
+        topic = topic[6:]
+
     if scene_controller in topic:
         return topic, scene_controller, "scene", payload
-    elif meter in topic:
-        command_class = meter
-        i = topic.find("/value")
 
+    match = search("(\/[0-9]{2,3}\/)[0-9]{1,2}\/(.*)", topic)
+
+    device_id = topic
+    command_class = match.group(1)
+    device_type = match.group(2)
+
+    # Combine 65537 (acumulated) and 66049 (usage) into usage
+    if meter in topic:
         if meter_usage_acummulated in topic:
-            device_id = topic[: i + 1] + meter_usage
+            match = search("(.*)\/[0-9]{2,3}\/[0-9]{1,2}\/", topic)
+            device_id = match.group(0) + meter_usage
             device_type = meter_usage_acummulated
-        else:
-            device_id = topic[:i] + topic[i + 6 :] if i > -1 else topic
-            device_type = topic[i + 7 :] if i > -1 else None
-    elif thermostat in topic:
-
-        command_class = thermostat
-
-        device_id = topic
-
-        i = topic.find("/setpoint")
-
-        device_type = topic[i + 1 :]
-
-    else:
-        i = topic.rfind("/")
-        device_id = topic[:i] if i > -1 else None
-        device_type = topic[i + 1 :] if i > -1 else None
-
-        i = device_id.rfind("/")
-        j = device_id.rfind("/", 0, i)
-
-        command_class = device_id[j : i + 1]
 
     return device_id, command_class, device_type, payload
 
@@ -192,7 +179,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
     if typedef is not None:
         Domoticz.Debug("Updating with typedef: {}".format(typedef))
 
-        if typedef["Type"] == "Scene":
+        if scene_controller in command_class:
             if payload.get("value") is not None:
                 # zwavejs2mqtt reports a value if a scene button actually are pressed
                 Devices[unit].Update(nValue=1, sValue="On")
@@ -253,7 +240,9 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
     payload = None
     topic = None
 
-    # print(Command, Level, Hue)
+    device_id, command_class, device_type, payload = parse_topic(DeviceID)
+
+    typedef = get_typedef(command_class, device_type)
 
     if scene_controller in DeviceID:
         # Scene controllers are handeled internaly
@@ -261,26 +250,25 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
         return
 
     if Command == "On":
-        topic = "{}/targetValue/set".format(DeviceID)
         if multilevel_switch in DeviceID:
             payload = '{{"value": {}}}'.format(255)
         elif binary_switch in DeviceID:
             payload = '{{"value": true}'
 
     elif Command == "Off":
-        topic = "{}/targetValue/set".format(DeviceID)
         if multilevel_switch in DeviceID:
             payload = '{"value": 0}'
         elif binary_switch in DeviceID:
             payload = '{"value": false}'
 
     elif Command == "Set Level":
-        if multilevel_switch in DeviceID:
-            topic = "{}/targetValue/set".format(DeviceID)
-            payload = '{{"value": {}}}'.format(Level)
-        if thermostat in DeviceID:
-            topic = "{}/set".format(DeviceID)
-            payload = '{{"value": {}}}'.format(Level)
+        payload = '{{"value": {}}}'.format(Level)
+
+    if typedef.get("state_topic") is not None:
+        match = search("(.*)\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
+        topic = "zwave/{}{}".format(match.group(0), typedef["state_topic"])
+    else:
+        topic = "zwave/{}/set".format(device_id)
 
     mqttConn.Send(
         {
