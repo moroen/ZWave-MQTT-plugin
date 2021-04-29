@@ -17,10 +17,22 @@ from .device_types import (
     get_typedef,
     get_humidity_level,
     thermostat,
+    notification,
 )
 
 from json import loads
 from re import T, search
+
+
+def sendMessage(self, msg):
+    if self.mqttConn.Connected():
+        self.mqttConn.Send(msg)
+    else:
+        if (
+            not self.mqttConn.Connecting()
+        ):  # not connected and not connecting so put msg in the queue and connect
+            self.messageQueue.append(msg)
+            self.mqttConn.Connect()
 
 
 def find_sensor_type(device_id):
@@ -270,7 +282,7 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
     else:
         topic = "zwave/{}/set".format(device_id)
 
-    mqttConn.Send(
+    sendMessage(
         {
             "Verb": "PUBLISH",
             "QoS": 1,

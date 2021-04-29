@@ -61,6 +61,7 @@ class BasePlugin:
 
         api.devices.indexRegisteredDevices(self, Devices)
 
+        self.messageQueue = []
         self.mqttConn = Domoticz.Connection(
             Name="MQTT Test",
             Transport="TCP/IP",
@@ -79,6 +80,9 @@ class BasePlugin:
             Domoticz.Debug("MQTT connected successfully.")
             sendData = {"Verb": "CONNECT", "ID": str(getnode())}
             Connection.Send(sendData)
+            while len(self.messageQueue) > 0:
+                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
+
         else:
             Domoticz.Error(
                 "Failed to connect ("
@@ -108,6 +112,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/+/38/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/+/37/+/currentValue", "QoS": 0},
+                        {"Topic": "zwave/+/+/113/#", "QoS": 0},
+                        {"Topic": "zwave/+/113/#", "QoS": 0},
                         {"Topic": "zwave/+/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/+/49/#", "QoS": 0},
@@ -187,14 +193,18 @@ class BasePlugin:
         Domoticz.Log("onDisconnect called")
 
     def onHeartbeat(self):
-        # Domoticz.Log("onHeartbeat called")
+        Domoticz.Log("onHeartbeat called")
 
-        if self.counter == 6:
-            # Domoticz.Log("Sending PING")
-            self.mqttConn.Send({"Verb": "PING"})
-            self.counter = 0
+        if self.mqttConn.Connected():
+            if self.counter == 6:
+                # Domoticz.Log("Sending PING")
+                self.mqttConn.Send({"Verb": "PING"})
+                self.counter = 0
+            else:
+                self.counter = self.counter + 1
         else:
-            self.counter = self.counter + 1
+            if not self.mqttConn.Connecting():
+                self.mqttConn.Connect()
 
     def firstFree(self):
         for num in range(1, 250):

@@ -7,6 +7,7 @@ binary_sensor = "/48/"
 multilevel_sensor = "/49/"
 thermostat = "/67/"
 scene_controller = "/91/"
+notification = "/113/"
 
 meter = "/50/"
 meter_usage = "value/66049"
@@ -51,6 +52,41 @@ device_types[binary_sensor] = {
         "SwitchType": 11,
         "nValue": 1,
         "sValue": "OnOff",
+    },
+    "Motion": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 62,
+        "SwitchType": 8,
+        "nValue": 1,
+        "sValue": "OnOff",
+    },
+}
+
+device_types[notification] = {
+    "Smoke_Alarm/Sensor_status": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 62,
+        "SwitchType": 5,
+        "nValue": 1,
+        "sValue": "OnOff",
+    },
+    "Smoke_Alarm/Alarm_status": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 62,
+        "SwitchType": 5,
+        "nValue": 1,
+        "sValue": "OnOff"
+        #    },
+        #    "Door_state": {
+        #        "Type": "DeviceType",
+        #        "DeviceType": 244,
+        #        "SubType": 73,
+        #        "SwitchType": 11,
+        #        "nValue": 1,
+        #        "sValue": "OnOff"
     },
 }
 
