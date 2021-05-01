@@ -53,6 +53,16 @@ class BasePlugin:
         self.counter = 0
         return
 
+    def sendMessage(self, msg):
+        if self.mqttConn.Connected():
+            self.mqttConn.Send(msg)
+        else:
+            if (
+                not self.mqttConn.Connecting()
+            ):  # not connected and not connecting so put msg in the queue and connect
+                self.messageQueue.append(msg)
+                self.mqttConn.Connect()
+
     def onStart(self):
         Domoticz.Log("onStart called")
 
@@ -109,21 +119,13 @@ class BasePlugin:
                     "PacketIdentifier": 1001,
                     "Topics": [
                         {"Topic": "zwave/+/38/+/currentValue", "QoS": 0},
-                        {"Topic": "zwave/+/+/38/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
-                        {"Topic": "zwave/+/+/37/+/currentValue", "QoS": 0},
-                        {"Topic": "zwave/+/+/113/#", "QoS": 0},
-                        {"Topic": "zwave/+/113/#", "QoS": 0},
-                        {"Topic": "zwave/+/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/48/#", "QoS": 0},
-                        {"Topic": "zwave/+/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
-                        {"Topic": "zwave/+/+/67/+/setpoint/+", "QoS": 0},
-                        {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
-                        {"Topic": "zwave/+/+/91/#", "QoS": 0},
-                        {"Topic": "zwave/+/91/#", "QoS": 0},
-                        {"Topic": "zwave/+/+/50/#", "QoS": 0},
                         {"Topic": "zwave/+/50/#", "QoS": 0},
+                        {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
+                        {"Topic": "zwave/+/91/+/scene/+", "QoS": 0},
+                        {"Topic": "zwave/+/113/#", "QoS": 0},
                     ],
                 }
             )
@@ -132,24 +134,10 @@ class BasePlugin:
             device, command_class, device_type, payload = api.devices.parse_topic(
                 Data["Topic"], Data["Payload"]
             )
-            # device, device_type = api.devices.find_device_and_type(Data["Topic"])
-            # payload = json.loads(Data["Payload"].decode("utf-8"))
-
-            # print(
-            #     "Device: {}\nCommand_class: {}\nType: {}\nPayload: {}\n".format(
-            #         device, command_class, device_type, payload
-            #     )
-            # )
-
-            # if Data["Topic"][-4:] == "/set":
-            #     # Ingnore all set messages, the update should come from the result messages
-            #     return
 
             if device is not None:
                 if device not in self.mqtt_unit_map:
-                    if not api.devices.registerDevice(
-                        self, Data["Topic"], self.firstFree()
-                    ):
+                    if not api.devices.registerDevice(self, Data, self.firstFree()):
                         # Unable to register the new device, ignore
                         return
 
@@ -165,10 +153,7 @@ class BasePlugin:
         #     + str(Level)
         # )
 
-        importlib.reload(api.devices)
-        api.devices.OnCommand(
-            self.mqttConn, Devices[Unit].DeviceID, Command, Level, Hue
-        )
+        api.devices.OnCommand(self, Devices[Unit].DeviceID, Command, Level, Hue)
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
         # Domoticz.Log(
@@ -197,7 +182,6 @@ class BasePlugin:
 
         if self.mqttConn.Connected():
             if self.counter == 6:
-                # Domoticz.Log("Sending PING")
                 self.mqttConn.Send({"Verb": "PING"})
                 self.counter = 0
             else:

@@ -10,8 +10,19 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount sour
 Replace /dev/ttyACM0 with your serial device
 
 ## Configure zwavejs2mqtt
-Open the browser http://localhost:8091. Select serial port in Zwave configuration. Set the IP (Host URL) of the MQTT broker in MQTT configration. Everything else should be left as default.
+Open the browser http://localhost:8091. 
+- Zwave configuration: 
+    - Select serial port
+- MQTT configuration: 
+    - Set the IP (Host URL) of the MQTT broker
+- Gateway configuration: 
+    - Use node names instead of numeric nodeIDs: Off
+    - Ignore location: On
+    - Include Node Info: On 
 
+Note: Specifying node names and locations in zwavejs2mqtt is not required, but recommended. This will generate somewhat sane names of the devices when they are added to domoticz.
+
+Hint: To add all devices at once, enable the plugin in domoticz, and press "Save" in zwavejs2mqtt preferences. This will generate status messages for all devices. 
 ## Install and configure Zwave-MQTT-plugin
 ```
 $ cd plugins

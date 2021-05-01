@@ -24,17 +24,6 @@ from json import loads
 from re import T, search
 
 
-def sendMessage(self, msg):
-    if self.mqttConn.Connected():
-        self.mqttConn.Send(msg)
-    else:
-        if (
-            not self.mqttConn.Connecting()
-        ):  # not connected and not connecting so put msg in the queue and connect
-            self.messageQueue.append(msg)
-            self.mqttConn.Connect()
-
-
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
     return device_id[i + 1 :] if i > -1 else None
@@ -49,17 +38,17 @@ def parse_topic(topic, payload=None):
     if payload is not None:
         payload = loads(payload.decode("utf-8"))
 
-    if topic[:6] == "zwave/":
-        topic = topic[6:]
-
     if scene_controller in topic:
         return topic, scene_controller, "scene", payload
 
-    match = search("(\/[0-9]{2,3}\/)[0-9]{1,2}\/(.*)", topic)
+    try:
+        match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
 
-    device_id = topic
-    command_class = match.group(1)
-    device_type = match.group(2)
+        device_id = match.group(0)
+        command_class = match.group(2)
+        device_type = match.group(4)
+    except AttributeError:
+        Domoticz.Error("Unparsable topic received: {}".format(topic))
 
     # Combine 65537 (acumulated) and 66049 (usage) into usage
     if meter in topic:
@@ -88,9 +77,11 @@ def indexRegisteredDevices(plugin, Devices):
     #     return deviceID
 
 
-def registerDevice(plugin, topic, new_unit_id):
+def registerDevice(plugin, mqtt_data, new_unit_id):
 
-    device_id, command_class, device_type, _ = parse_topic(topic)
+    device_id, command_class, device_type, payload = parse_topic(
+        mqtt_data["Topic"], mqtt_data["Payload"]
+    )
 
     Domoticz.Debug(
         "Registering device {} as unit {} with type {}".format(
@@ -98,14 +89,29 @@ def registerDevice(plugin, topic, new_unit_id):
         )
     )
 
+    print(payload)
+
     typedef = get_typedef(command_class, device_type)
+
+    device_name = device_id
+
+    nodeName = payload.get("nodeName")
+    nodeLocation = payload.get("nodeLocation")
+
+    if nodeName is not None:
+        if nodeName != "":
+            device_name = (
+                "{} - {}".format(nodeLocation, nodeName)
+                if nodeLocation != ""
+                else nodeName
+            )
 
     # print("Typedef: {}".format(typedef))
 
     if typedef is not None:
         if typedef["Type"] == "DeviceType":
             Domoticz.Device(
-                Name=device_id,
+                Name=device_name,
                 Unit=new_unit_id,
                 Type=typedef["DeviceType"],
                 Subtype=typedef["SubType"],
@@ -114,7 +120,7 @@ def registerDevice(plugin, topic, new_unit_id):
             ).Create()
         else:
             Domoticz.Device(
-                Name=device_id,
+                Name=device_name,
                 Unit=new_unit_id,
                 TypeName=typedef["Type"],
                 # Type=244,
@@ -244,7 +250,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         Devices[unit].Update(nValue=nValue, sValue=sValue)
 
 
-def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
+def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
     # device_id, command_class, device_type, payload = parse_topic(DeviceID)
 
     # print(device_id, command_class, device_type)
@@ -277,12 +283,12 @@ def OnCommand(mqttConn, DeviceID, Command, Level=None, Hue=None):
         payload = '{{"value": {}}}'.format(Level)
 
     if typedef.get("state_topic") is not None:
-        match = search("(.*)\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
-        topic = "zwave/{}{}".format(match.group(0), typedef["state_topic"])
+        match = search("\/[0-9]{1,3}\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
+        topic = "zwave{}{}".format(match.group(0), typedef["state_topic"])
     else:
-        topic = "zwave/{}/set".format(device_id)
+        topic = "zwave{}/set".format(device_id)
 
-    sendMessage(
+    plugin.sendMessage(
         {
             "Verb": "PUBLISH",
             "QoS": 1,
