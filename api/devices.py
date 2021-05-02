@@ -38,9 +38,6 @@ def parse_topic(topic, payload=None):
     if payload is not None:
         payload = loads(payload.decode("utf-8"))
 
-    if scene_controller in topic:
-        return topic, scene_controller, "scene", payload
-
     try:
         match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
 
@@ -49,11 +46,15 @@ def parse_topic(topic, payload=None):
         device_type = match.group(4)
     except AttributeError:
         Domoticz.Error("Unparsable topic received: {}".format(topic))
+        return
+        
+    if scene_controller in topic:
+        return device_id, scene_controller, "scene", payload
 
     # Combine 65537 (acumulated) and 66049 (usage) into usage
     if meter in topic:
         if meter_usage_acummulated in topic:
-            match = search("(.*)\/[0-9]{2,3}\/[0-9]{1,2}\/", topic)
+            match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/", topic)
             device_id = match.group(0) + meter_usage
             device_type = meter_usage_acummulated
 
@@ -88,8 +89,6 @@ def registerDevice(plugin, mqtt_data, new_unit_id):
             device_id, new_unit_id, device_type
         )
     )
-
-    print(payload)
 
     typedef = get_typedef(command_class, device_type)
 
