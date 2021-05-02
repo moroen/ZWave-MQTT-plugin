@@ -45,7 +45,7 @@ def parse_topic(topic, payload=None):
         command_class = match.group(2)
         device_type = match.group(4)
     except AttributeError:
-        Domoticz.Error("Unparsable topic received: {}".format(topic))
+        Domoticz.Error("Unparsable topic received: {}. Check zwavejs2mqtt preferences.".format(topic))
         return
 
     if scene_controller in topic:

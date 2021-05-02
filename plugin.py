@@ -130,10 +130,13 @@ class BasePlugin:
                 }
             )
         elif Data["Verb"] == "PUBLISH":
-
-            device, command_class, device_type, payload = api.devices.parse_topic(
-                Data["Topic"], Data["Payload"]
-            )
+            try:
+                device, command_class, device_type, payload = api.devices.parse_topic(
+                    Data["Topic"], Data["Payload"]
+                )
+            except TypeError:
+                # parse_topic returned None, we're done with this topic
+                return
 
             if device is not None:
                 if device not in self.mqtt_unit_map:
