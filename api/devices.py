@@ -47,7 +47,7 @@ def parse_topic(topic, payload=None):
     except AttributeError:
         Domoticz.Error("Unparsable topic received: {}".format(topic))
         return
-        
+
     if scene_controller in topic:
         return device_id, scene_controller, "scene", payload
 
