@@ -8,6 +8,7 @@ from .device_types import (
     binary_switch,
     multilevel_sensor,
     scene_controller,
+    scene_controller2,
     meter,
     meter_usage,
     meter_usage_acummulated,
@@ -36,24 +37,48 @@ def find_device_id(device_id):
 
 def parse_topic(topic, payload=None):
     if payload is not None:
-        payload = loads(payload.decode("utf-8"))
+
+        try:
+            payload = loads(payload.decode("utf-8"))
+        except ValueError:
+            Domoticz.Debug("Payload decode error: {}".format(payload))
+            device_id = None
+            command_class = None
+            device_type = None
+            return device_id, command_class, device_type, payload
 
     try:
         match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
+
+        if match is None:
+            Domoticz.Debug("Unparsable topic received: {}".format(topic))
+            device_id = None
+            command_class = None
+            device_type = None
+            return device_id, command_class, device_type, payload
 
         device_id = match.group(0)
         command_class = match.group(2)
         device_type = match.group(4)
     except AttributeError:
-        Domoticz.Error(
-            "Unparsable topic received: {}. Check zwavejs2mqtt preferences.".format(
-                topic
-            )
-        )
+        Domoticz.Debug("Unparsable topic received: {}".format(topic))
         return
 
     if scene_controller in topic:
         return device_id, scene_controller, "scene", payload
+
+    if scene_controller2 in topic:
+        try:
+            keyNum = payload["value"]
+
+            device_id = device_id + str(keyNum)
+            return device_id, scene_controller2, "sceneId", payload
+
+        except KeyError:
+            device_id = None
+            command_class = None
+            device_type = None
+            return device_id, command_class, device_type, payload
 
     # Combine 65537 (acumulated) and 66049 (usage) into usage
     if meter in topic:
@@ -88,7 +113,7 @@ def registerDevice(plugin, mqtt_data, new_unit_id):
         mqtt_data["Topic"], mqtt_data["Payload"]
     )
 
-    Domoticz.Debug(
+    Domoticz.Log(
         "Registering device {} as unit {} with type {}".format(
             device_id, new_unit_id, device_type
         )
@@ -206,6 +231,12 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
                 Devices[unit].Update(nValue=1, sValue="On")
             return
 
+        if scene_controller2 in command_class:
+            if payload.get("value") is not None:
+                # zwavejs2mqtt reports a value if a scene button actually are pressed
+                Devices[unit].Update(nValue=1, sValue="On")
+            return
+
         # nValue
         if typedef["nValue"] == 0:
             nValue = 0
@@ -266,6 +297,11 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
     typedef = get_typedef(command_class, device_type)
 
     if scene_controller in DeviceID:
+        # Scene controllers are handeled internaly
+        # print("Scene Controller clicked")
+        return
+
+    if scene_controller2 in DeviceID:
         # Scene controllers are handeled internaly
         # print("Scene Controller clicked")
         return

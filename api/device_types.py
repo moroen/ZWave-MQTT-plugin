@@ -1,8 +1,9 @@
-from Domoticz import Log, Error
+from Domoticz import Log, Error, Debug
 
 # Command classes
 binary_switch = "/37/"
 multilevel_switch = "/38/"
+scene_controller2 = "/43/"
 binary_sensor = "/48/"
 multilevel_sensor = "/49/"
 thermostat = "/67/"
@@ -174,12 +175,23 @@ device_types[scene_controller] = {
     }
 }
 
+device_types[scene_controller2] = {
+    "sceneId": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 62,
+        "SwitchType": 9,
+        "nValue": 1,
+        "sValue": "OnOff",
+    }
+}
+
 
 def get_typedef(command_class, device_type):
     c_class = device_types.get(command_class)
 
     if c_class is None:
-        Error(
+        Log(
             "Command Class {} with type {} is unknown".format(
                 command_class, device_type
             )
@@ -188,7 +200,7 @@ def get_typedef(command_class, device_type):
 
     typedef = c_class.get(device_type)
     if typedef is None:
-        Error(
+        Log(
             "Devicetype {} for command class {} is unknown".format(
                 device_type, command_class
             )
