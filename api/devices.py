@@ -71,7 +71,7 @@ def parse_topic(topic, payload=None):
         try:
             keyNum = payload["value"]
 
-            device_id = device_id + str(keyNum)
+            device_id = device_id + "/" + str(keyNum)
             return device_id, scene_controller2, "sceneId", payload
 
         except KeyError:
