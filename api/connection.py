@@ -1,6 +1,6 @@
 from Domoticz import Log, Error, Debug
 import Domoticz
-from .device_types import device_types
+from .device_types import device_types, get_typedef
 
 
 def subscribe_topics(mqttConn):
@@ -8,7 +8,8 @@ def subscribe_topics(mqttConn):
 
     for cc in device_types:
         for device_type in device_types[cc]:
-            topic = "zwave/+{}+/{}".format(cc, device_type)
+            special_topic = get_typedef(cc, device_type).get("topic")
+            topic = "zwave/+{}+/{}".format(cc, device_type) if special_topic is None else "zwave/+{}+/{}".format(cc, special_topic)
             topics.append(
                 {"Topic": topic, "QoS": 0},
             )

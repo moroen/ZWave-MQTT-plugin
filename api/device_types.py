@@ -180,6 +180,7 @@ device_types[central_scene] = {
         "SwitchType": 9,
         "nValue": 1,
         "sValue": "OnOff",
+        "topic": "scene/+"
     }
 }
 
