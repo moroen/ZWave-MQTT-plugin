@@ -65,6 +65,14 @@ device_types[binary_sensor] = {
 }
 
 device_types[notification] = {
+    "Access_Control/Door_state": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 73,
+        "SwitchType": 11,
+        "nValue": 1,
+        "sValue": "OnOff",
+    },
     "Smoke_Alarm/Sensor_status": {
         "Type": "DeviceType",
         "DeviceType": 244,

@@ -241,7 +241,10 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         if typedef["nValue"] == 0:
             nValue = 0
         elif typedef["nValue"] == 1:
-            nValue = 0 if payload["value"] == 0 else 1
+            if "value" in payload:
+                nValue = 0 if payload["value"] == 0 else 1
+            else:
+                return
         elif typedef["nValue"] == 2:
             nValue = 0 if payload["value"] == 0 else 2
         elif typedef["nValue"] == "value":
@@ -276,7 +279,13 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             )
 
         elif typedef["sValue"] == "OnOff":
-            sValue = "On" if payload["value"] else "Off"
+            val = str(payload["value"]) 
+            if val == "True" or val == "22":
+                sValue = "On"
+                nValue = 1
+            else:
+                sValue = "Off"
+                nValue = 0
         elif typedef["sValue"] == "humidity_level":
             sValue = get_humidity_level(payload["value"])
 

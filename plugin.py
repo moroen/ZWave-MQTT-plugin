@@ -17,10 +17,16 @@
             </options>
         </param>
 
-        <param field="Mode6" label="Debug" width="75px">
+        <param field="Mode6" label="Debug" width="150px">
             <options>
-                <option label="True" value="Debug"/>
-                <option label="False" value="Normal"  default="true" />
+                <option label="None" value="0"  default="true" />
+                <option label="Python Only" value="2"/>
+                <option label="Basic Debugging" value="62"/>
+                <option label="Basic+Messages" value="126"/>
+                <option label="Connections Only" value="16"/>
+                <option label="Connections+Python" value="18"/>
+                <option label="Connections+Queue" value="144"/>
+                <option label="All" value="-1"/>
             </options>
         </param>
     </params>
@@ -66,8 +72,10 @@ class BasePlugin:
     def onStart(self):
         Domoticz.Log("onStart called")
 
-        if Parameters["Mode6"] == "Debug":
-            Domoticz.Debugging(1)
+        if Parameters["Mode6"] != "0":
+            Domoticz.Debugging(int(Parameters["Mode6"]))
+#        if Parameters["Mode6"] == "Debug":
+#            Domoticz.Debugging(1)
 
         api.devices.indexRegisteredDevices(self, Devices)
 
@@ -91,7 +99,7 @@ class BasePlugin:
             sendData = {"Verb": "CONNECT", "ID": str(getnode())}
             Connection.Send(sendData)
             while len(self.messageQueue) > 0:
-                #                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
+#                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
                 if self.mqttConn.Connected():
                     self.mqttConn.Send(msg)
                 else:
@@ -134,7 +142,8 @@ class BasePlugin:
                         {"Topic": "zwave/+/50/#", "QoS": 0},
                         {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
                         {"Topic": "zwave/+/91/+/scene/+", "QoS": 0},
-                        {"Topic": "zwave/+/113/#", "QoS": 0},
+                        {"Topic": "zwave/+/113/+/Access_Control/#", "QoS": 0},
+                        {"Topic": "zwave/+/113/+/Smoke_Alarm/#", "QoS": 0},
                     ],
                 }
             )
