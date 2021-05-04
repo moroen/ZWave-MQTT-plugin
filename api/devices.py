@@ -7,8 +7,8 @@ from .device_types import (
     multilevel_switch,
     binary_switch,
     multilevel_sensor,
-    scene_controller,
-    scene_controller2,
+    central_scene,
+    scene_activation,
     meter,
     meter_usage,
     meter_usage_acummulated,
@@ -84,15 +84,15 @@ def parse_topic(topic, payload=None):
         Domoticz.Debug("Unparsable topic received: {}".format(topic))
         return
 
-    if scene_controller in topic:
-        return device_id, scene_controller, "scene", payload
+    if central_scene in topic:
+        return device_id, central_scene, "scene", payload
 
-    if scene_controller2 in topic:
+    if scene_activation in topic:
         try:
             keyNum = payload["value"]
 
             device_id = device_id + "/" + str(keyNum)
-            return device_id, scene_controller2, "sceneId", payload
+            return device_id, scene_activation, "sceneId", payload
 
         except KeyError:
             device_id = None
@@ -245,13 +245,13 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
     if typedef is not None:
         Domoticz.Debug("Updating with typedef: {}".format(typedef))
 
-        if scene_controller in command_class:
+        if central_scene in command_class:
             if payload.get("value") is not None:
                 # zwavejs2mqtt reports a value if a scene button actually are pressed
                 Devices[unit].Update(nValue=1, sValue="On")
             return
 
-        if scene_controller2 in command_class:
+        if scene_activation in command_class:
             if payload.get("value") is not None:
                 # zwavejs2mqtt reports a value if a scene button actually are pressed
                 Devices[unit].Update(nValue=1, sValue="On")
@@ -261,7 +261,10 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
         if typedef["nValue"] == 0:
             nValue = 0
         elif typedef["nValue"] == 1:
-            nValue = 0 if payload["value"] == 0 else 1
+            if "value" in payload:
+                nValue = 0 if payload["value"] == 0 else 1
+            else:
+                return
         elif typedef["nValue"] == 2:
             nValue = 0 if payload["value"] == 0 else 2
         elif typedef["nValue"] == "value":
@@ -296,7 +299,13 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             )
 
         elif typedef["sValue"] == "OnOff":
-            sValue = "On" if payload["value"] else "Off"
+            val = str(payload["value"])
+            if val == "True" or val == "22":
+                sValue = "On"
+                nValue = 1
+            else:
+                sValue = "Off"
+                nValue = 0
         elif typedef["sValue"] == "humidity_level":
             sValue = get_humidity_level(payload["value"])
 
@@ -316,12 +325,12 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
 
     typedef = get_typedef(command_class, device_type)
 
-    if scene_controller in DeviceID:
+    if central_scene in DeviceID:
         # Scene controllers are handeled internaly
         # print("Scene Controller clicked")
         return
 
-    if scene_controller2 in DeviceID:
+    if scene_activation in DeviceID:
         # Scene controllers are handeled internaly
         # print("Scene Controller clicked")
         return

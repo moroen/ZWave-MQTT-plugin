@@ -3,11 +3,11 @@ from Domoticz import Log, Error, Debug
 # Command classes
 binary_switch = "/37/"
 multilevel_switch = "/38/"
-scene_controller2 = "/43/"
+scene_activation = "/43/"
 binary_sensor = "/48/"
 multilevel_sensor = "/49/"
 thermostat = "/67/"
-scene_controller = "/91/"
+central_scene = "/91/"
 notification = "/113/"
 
 meter = "/50/"
@@ -65,6 +65,14 @@ device_types[binary_sensor] = {
 }
 
 device_types[notification] = {
+    "Access_Control/Door_state": {
+        "Type": "DeviceType",
+        "DeviceType": 244,
+        "SubType": 73,
+        "SwitchType": 11,
+        "nValue": 1,
+        "sValue": "OnOff",
+    },
     "Smoke_Alarm/Sensor_status": {
         "Type": "DeviceType",
         "DeviceType": 244,
@@ -164,7 +172,7 @@ device_types[meter] = {
     meter_usage_volt: {"Type": "Voltage", "nValue": 0, "sValue": "value", "factor": 1},
 }
 
-device_types[scene_controller] = {
+device_types[central_scene] = {
     "scene": {
         "Type": "DeviceType",
         "DeviceType": 244,
@@ -175,7 +183,7 @@ device_types[scene_controller] = {
     }
 }
 
-device_types[scene_controller2] = {
+device_types[scene_activation] = {
     "sceneId": {
         "Type": "DeviceType",
         "DeviceType": 244,
