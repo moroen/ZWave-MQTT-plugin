@@ -91,7 +91,15 @@ class BasePlugin:
             sendData = {"Verb": "CONNECT", "ID": str(getnode())}
             Connection.Send(sendData)
             while len(self.messageQueue) > 0:
-                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
+                #                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
+                if self.mqttConn.Connected():
+                    self.mqttConn.Send(msg)
+                else:
+                    if (
+                        not self.mqttConn.Connecting()
+                    ):  # not connected and not connecting so put msg in the queue and connect
+                        self.messageQueue.append(msg)
+                        self.mqttConn.Connect()
 
         else:
             Domoticz.Error(
@@ -120,6 +128,7 @@ class BasePlugin:
                     "Topics": [
                         {"Topic": "zwave/+/38/+/currentValue", "QoS": 0},
                         {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
+                        {"Topic": "zwave/+/43/+/sceneId", "QoS": 0},
                         {"Topic": "zwave/+/48/#", "QoS": 0},
                         {"Topic": "zwave/+/49/#", "QoS": 0},
                         {"Topic": "zwave/+/50/#", "QoS": 0},
@@ -130,21 +139,21 @@ class BasePlugin:
                 }
             )
         elif Data["Verb"] == "PUBLISH":
-            try:
+
+            if Data["Payload"] is not None:
                 device, command_class, device_type, payload = api.devices.parse_topic(
                     Data["Topic"], Data["Payload"]
                 )
-            except TypeError:
-                # parse_topic returned None, we're done with this topic
-                return
 
-            if device is not None:
-                if device not in self.mqtt_unit_map:
-                    if not api.devices.registerDevice(self, Data, self.firstFree()):
-                        # Unable to register the new device, ignore
-                        return
+                if device is not None:
+                    if device not in self.mqtt_unit_map:
+                        if not api.devices.registerDevice(self, Data, self.firstFree()):
+                            # Unable to register the new device, ignore
+                            return
 
-                api.devices.updateDevice(self, Devices, Data["Topic"], Data["Payload"])
+                    api.devices.updateDevice(
+                        self, Devices, Data["Topic"], Data["Payload"]
+                    )
 
     def onCommand(self, Unit, Command, Level, Hue):
         # Domoticz.Log(
@@ -184,7 +193,7 @@ class BasePlugin:
         Domoticz.Log("onHeartbeat called")
 
         if self.mqttConn.Connected():
-            if self.counter == 6:
+            if self.counter == 3:
                 self.mqttConn.Send({"Verb": "PING"})
                 self.counter = 0
             else:
