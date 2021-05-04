@@ -42,6 +42,7 @@ import json
 
 from uuid import getnode
 import api.devices
+import api.connection
 
 
 class mqtt_device:
@@ -129,24 +130,7 @@ class BasePlugin:
 
         if Data["Verb"] == "CONNACK":
             Domoticz.Debug("MQTT Connection accepted")
-            self.mqttConn.Send(
-                {
-                    "Verb": "SUBSCRIBE",
-                    "PacketIdentifier": 1001,
-                    "Topics": [
-                        {"Topic": "zwave/+/38/+/currentValue", "QoS": 0},
-                        {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
-                        {"Topic": "zwave/+/43/+/sceneId", "QoS": 0},
-                        {"Topic": "zwave/+/48/#", "QoS": 0},
-                        {"Topic": "zwave/+/49/#", "QoS": 0},
-                        {"Topic": "zwave/+/50/#", "QoS": 0},
-                        {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
-                        {"Topic": "zwave/+/91/+/scene/+", "QoS": 0},
-                        {"Topic": "zwave/+/113/+/Access_Control/#", "QoS": 0},
-                        {"Topic": "zwave/+/113/+/Smoke_Alarm/#", "QoS": 0},
-                    ],
-                }
-            )
+            api.connection.subscribe_topics(self.mqttConn)
         elif Data["Verb"] == "PUBLISH":
 
             if Data["Payload"] is not None:

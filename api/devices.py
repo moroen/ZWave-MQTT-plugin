@@ -35,6 +35,26 @@ def find_device_id(device_id):
     return device_id[:i] if i > -1 else None
 
 
+def subscribe_topics(mqttConn):
+    mqttConn.Send(
+        {
+            "Verb": "SUBSCRIBE",
+            "PacketIdentifier": 1001,
+            "Topics": [
+                {"Topic": "zwave/+/38/+/currentValue", "QoS": 0},
+                {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
+                {"Topic": "zwave/+/43/+/sceneId", "QoS": 0},
+                {"Topic": "zwave/+/48/#", "QoS": 0},
+                {"Topic": "zwave/+/49/#", "QoS": 0},
+                {"Topic": "zwave/+/50/#", "QoS": 0},
+                {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
+                {"Topic": "zwave/+/91/+/scene/+", "QoS": 0},
+                {"Topic": "zwave/+/113/#", "QoS": 0},
+            ],
+        }
+    )
+
+
 def parse_topic(topic, payload=None):
     if payload is not None:
 
