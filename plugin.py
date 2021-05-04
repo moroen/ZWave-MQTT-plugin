@@ -1,9 +1,9 @@
 # Plugin for using zwavejs2mqtt as a zwave interface
 #
-# Author: moroen
+# Author: moroen (https://github.com/moroen) & heggink (https://github.com/heggink)
 #
 """
-<plugin key="BasePlug" name="ZWave-MQTT" author="moroen" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
+<plugin key="BasePlug" name="ZWave-MQTT" author="moroen / heggink" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
     <description>
         <h2>Zwave MQTT</h2><br/>
     </description>
@@ -71,12 +71,13 @@ class BasePlugin:
                 self.mqttConn.Connect()
 
     def onStart(self):
-        Domoticz.Log("onStart called")
+        Domoticz.Debug("onStart called")
 
         if Parameters["Mode6"] != "0":
-            Domoticz.Debugging(int(Parameters["Mode6"]))
-        #        if Parameters["Mode6"] == "Debug":
-        #            Domoticz.Debugging(1)
+            try:
+                Domoticz.Debugging(int(Parameters["Mode6"]))
+            except ValueError:
+                Domoticz.Log("Illegal value for Debug, using default (0)")
 
         api.devices.indexRegisteredDevices(self, Devices)
 
@@ -180,10 +181,10 @@ class BasePlugin:
         pass
 
     def onDisconnect(self, Connection):
-        Domoticz.Log("onDisconnect called")
+        Domoticz.Debug("onDisconnect called")
 
     def onHeartbeat(self):
-        Domoticz.Log("onHeartbeat called")
+        Domoticz.Debug("onHeartbeat called")
 
         if self.mqttConn.Connected():
             if self.counter == 3:
