@@ -279,7 +279,7 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             )
 
         elif typedef["sValue"] == "OnOff":
-            val = str(payload["value"]) 
+            val = str(payload["value"])
             if val == "True" or val == "22":
                 sValue = "On"
                 nValue = 1
