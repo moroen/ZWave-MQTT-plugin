@@ -91,7 +91,7 @@ class BasePlugin:
             sendData = {"Verb": "CONNECT", "ID": str(getnode())}
             Connection.Send(sendData)
             while len(self.messageQueue) > 0:
-#                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
+                #                sendMessage(self.messageQueue.pop(0))  # send out all messages queued
                 if self.mqttConn.Connected():
                     self.mqttConn.Send(msg)
                 else:
