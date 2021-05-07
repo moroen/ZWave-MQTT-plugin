@@ -19,10 +19,11 @@ from .device_types import (
     get_humidity_level,
     thermostat,
     notification,
+    battery_status,
 )
 
 from json import loads
-from re import T, search
+from re import search, match, compile
 
 
 def find_sensor_type(device_id):
@@ -33,26 +34,6 @@ def find_sensor_type(device_id):
 def find_device_id(device_id):
     i = device_id.rfind("/")
     return device_id[:i] if i > -1 else None
-
-
-def subscribe_topics(mqttConn):
-    mqttConn.Send(
-        {
-            "Verb": "SUBSCRIBE",
-            "PacketIdentifier": 1001,
-            "Topics": [
-                {"Topic": "zwave/+/38/+/currentValue", "QoS": 0},
-                {"Topic": "zwave/+/37/+/currentValue", "QoS": 0},
-                {"Topic": "zwave/+/43/+/sceneId", "QoS": 0},
-                {"Topic": "zwave/+/48/#", "QoS": 0},
-                {"Topic": "zwave/+/49/#", "QoS": 0},
-                {"Topic": "zwave/+/50/#", "QoS": 0},
-                {"Topic": "zwave/+/67/+/setpoint/+", "QoS": 0},
-                {"Topic": "zwave/+/91/+/scene/+", "QoS": 0},
-                {"Topic": "zwave/+/113/#", "QoS": 0},
-            ],
-        }
-    )
 
 
 def parse_topic(topic, payload=None):
@@ -68,18 +49,18 @@ def parse_topic(topic, payload=None):
             return device_id, command_class, device_type, payload
 
     try:
-        match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
+        res = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
 
-        if match is None:
+        if res is None:
             Domoticz.Debug("Unparsable topic received: {}".format(topic))
             device_id = None
             command_class = None
             device_type = None
             return device_id, command_class, device_type, payload
 
-        device_id = match.group(0)
-        command_class = match.group(2)
-        device_type = match.group(4)
+        device_id = res.group(0)
+        command_class = res.group(2)
+        device_type = res.group(4)
     except AttributeError:
         Domoticz.Debug("Unparsable topic received: {}".format(topic))
         return
@@ -100,14 +81,58 @@ def parse_topic(topic, payload=None):
             device_type = None
             return device_id, command_class, device_type, payload
 
-    # Combine 65537 (acumulated) and 66049 (usage) into usage
-    if meter in topic:
-        if meter_usage_acummulated in topic:
-            match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/", topic)
-            device_id = match.group(0) + meter_usage
-            device_type = meter_usage_acummulated
-
     return device_id, command_class, device_type, payload
+
+
+def onMessage(plugin, Devices, Data):
+    if Data["Payload"] is not None:
+        device, command_class, device_type, payload = parse_topic(
+            Data["Topic"], Data["Payload"]
+        )
+
+        typedef = get_typedef(command_class, device_type)
+
+        if device is not None:
+            if typedef["Primary_device"]:
+                if device not in plugin.mqtt_unit_map:
+                    if not registerDevice(plugin, Data, plugin.firstFree()):
+                        # Unable to register the new primary device, ignore
+                        return
+
+                updateDevice(plugin, Devices, Data)
+            else:
+                # Device Property
+                update_device_property(plugin, Devices, Data)
+
+
+def update_device_property(plugin, Devices, Data):
+    Domoticz.Debug(
+        "Update_device_property called with topic: {} and payload {}".format(
+            Data["Topic"], Data["Payload"]
+        )
+    )
+
+    device, command_class, device_type, payload = parse_topic(
+        Data["Topic"], Data["Payload"]
+    )
+
+    typedef = get_typedef(command_class, device_type)
+
+    node_id = match("\/([0-9]{1,3})\/", device).group(1)
+
+    regx = compile("\/{}\/[0-9]{{1,3}}\/[0-9]{{1,2}}".format(node_id))
+
+    for aDevice in plugin.mqtt_unit_map:
+        res = regx.match(aDevice)
+        if res is not None:
+            unit = plugin.mqtt_unit_map[aDevice]
+            if typedef["Type"] == "Battery_Level":
+                batteryLevel = int(payload["value"])
+                Devices[unit].Update(
+                    nValue=Devices[unit].nValue,
+                    sValue=Devices[unit].sValue,
+                    BatteryLevel=batteryLevel,
+                )
 
 
 def indexRegisteredDevices(plugin, Devices):
@@ -120,23 +145,11 @@ def indexRegisteredDevices(plugin, Devices):
             # self.updateDevice(aUnit)
             plugin.mqtt_unit_map[dev_id] = aUnit
 
-        # print(plugin.mqtt_unit_map)
-        # return [dev.DeviceID for key, dev in Devices.items()]
-    # else:
 
-    #     return deviceID
-
-
-def registerDevice(plugin, mqtt_data, new_unit_id):
+def registerDevice(plugin, Data, new_unit_id):
 
     device_id, command_class, device_type, payload = parse_topic(
-        mqtt_data["Topic"], mqtt_data["Payload"]
-    )
-
-    Domoticz.Log(
-        "Registering device {} as unit {} with type {}".format(
-            device_id, new_unit_id, device_type
-        )
+        Data["Topic"], Data["Payload"]
     )
 
     typedef = get_typedef(command_class, device_type)
@@ -154,43 +167,52 @@ def registerDevice(plugin, mqtt_data, new_unit_id):
                 else nodeName
             )
 
-    # print("Typedef: {}".format(typedef))
-
     if typedef is not None:
-        if typedef["Type"] == "DeviceType":
-            Domoticz.Device(
-                Name=device_name,
-                Unit=new_unit_id,
-                Type=typedef["DeviceType"],
-                Subtype=typedef["SubType"],
-                Switchtype=typedef["SwitchType"],
-                DeviceID=device_id,
-            ).Create()
-        else:
-            Domoticz.Device(
-                Name=device_name,
-                Unit=new_unit_id,
-                TypeName=typedef["Type"],
-                # Type=244,
-                # Subtype=73,
-                # Switchtype=7,
-                DeviceID=device_id,
-            ).Create()
+        if typedef["Primary_device"]:
+            if typedef["Type"] == "DeviceType":
+                Domoticz.Device(
+                    Name=device_name,
+                    Unit=new_unit_id,
+                    Type=typedef["DeviceType"],
+                    Subtype=typedef["SubType"],
+                    Switchtype=typedef["SwitchType"],
+                    DeviceID=device_id,
+                ).Create()
+            else:
+                Domoticz.Device(
+                    Name=device_name,
+                    Unit=new_unit_id,
+                    TypeName=typedef["Type"],
+                    # Type=244,
+                    # Subtype=73,
+                    # Switchtype=7,
+                    DeviceID=device_id,
+                ).Create()
 
-        # Map the added device
-        # plugin.mqtt_devices.append(device_id)
-        plugin.mqtt_unit_map[device_id] = new_unit_id
-        return True
+            # Map the added device
+            # plugin.mqtt_devices.append(device_id)
+            plugin.mqtt_unit_map[device_id] = new_unit_id
+            Domoticz.Log(
+                "Registering device {} as unit {} with type {}".format(
+                    device_id, new_unit_id, device_type
+                )
+            )
+            return True
+        else:
+            return False
     else:
         return False
 
 
-def updateDevice(plugin, Devices, topic, mqtt_payload):
+def updateDevice(plugin, Devices, Data):
     nValue = 0
     sValue = ""
 
-    device_id, command_class, device_type, payload = parse_topic(topic, mqtt_payload)
+    device_id, command_class, device_type, payload = parse_topic(
+        Data["Topic"], Data["Payload"]
+    )
     unit = plugin.mqtt_unit_map[device_id]
+
     try:
         sValue = Devices[unit].sValue
     except KeyError:
@@ -199,8 +221,8 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
             "Failed to update device {}, unit {} not found.".format(device_id, unit)
         )
         del plugin.mqtt_unit_map[device_id]
-        registerDevice(plugin, topic, plugin.firstFree())
-        updateDevice(plugin, Devices, topic, mqtt_payload)
+        registerDevice(plugin, Data, plugin.firstFree())
+        updateDevice(plugin, Devices, Data)
         return
 
     # Combine TEMP and Humidity if same unit reports both
@@ -314,10 +336,6 @@ def updateDevice(plugin, Devices, topic, mqtt_payload):
 
 
 def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
-    # device_id, command_class, device_type, payload = parse_topic(DeviceID)
-
-    # print(device_id, command_class, device_type)
-
     payload = None
     topic = None
 
@@ -327,12 +345,11 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
 
     if central_scene in DeviceID:
         # Scene controllers are handeled internaly
-        # print("Scene Controller clicked")
+
         return
 
     if scene_activation in DeviceID:
         # Scene controllers are handeled internaly
-        # print("Scene Controller clicked")
         return
 
     if Command == "On":
@@ -351,8 +368,8 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
         payload = '{{"value": {}}}'.format(Level)
 
     if typedef.get("state_topic") is not None:
-        match = search("\/[0-9]{1,3}\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
-        topic = "zwave{}{}".format(match.group(0), typedef["state_topic"])
+        res = search("\/[0-9]{1,3}\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
+        topic = "zwave{}{}".format(res.group(0), typedef["state_topic"])
     else:
         topic = "zwave{}/set".format(device_id)
 

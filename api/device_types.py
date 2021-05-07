@@ -9,6 +9,7 @@ multilevel_sensor = "/49/"
 thermostat = "/67/"
 central_scene = "/91/"
 notification = "/113/"
+battery_status = "/128/"
 
 meter = "/50/"
 meter_usage = "value/66049"
@@ -109,6 +110,7 @@ device_types[thermostat] = {
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
+        "Primary_device": True,
     },
     "setpoint/11": {
         "Type": "DeviceType",
@@ -118,6 +120,7 @@ device_types[thermostat] = {
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
+        "Primary_device": True,
     },
 }
 
@@ -127,49 +130,74 @@ device_types[multilevel_sensor] = {
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
+        "Primary_device": True,
     },
-    "Power": {"Type": "Usage", "nValue": 0, "sValue": "value", "factor": 1},
+    "Power": {
+        "Type": "Usage",
+        "nValue": 0,
+        "sValue": "value",
+        "factor": 1,
+        "Primary_device": True,
+    },
     "Humidity": {
         "Type": "Humidity",
         "nValue": "value",
         "sValue": "humidity_level",
         "factor": 1,
+        "Primary_device": True,
     },
     "Air_temperature": {
         "Type": "Temperature",
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
+        "Primary_device": True,
     },
     "Humidity_combined": {
         "Type": "Temp+Hum",
         "nValue": 0,
         "sValue": ";value;hum",
         "factor": 1,
+        "Primary_device": True,
     },
     "Air_temperature_combined": {
         "Type": "Temp+Hum",
         "nValue": 0,
         "sValue": "value;",
         "factor": 1,
+        "Primary_device": True,
     },
 }
 
 device_types[meter] = {
-    meter_usage: {"Type": "kWh", "nValue": 0, "sValue": "value;", "factor": 1},
+    meter_usage: {
+        "Type": "kWh",
+        "nValue": 0,
+        "sValue": "value;",
+        "factor": 1,
+        "Primary_device": True,
+    },
     meter_usage_acummulated: {
         "Type": "kWh",
         "nValue": 0,
         "sValue": ";value",
         "factor": 1000,
+        "Primary_device": True,
     },
     meter_usage_ampere: {
         "Type": "Current (Single)",
         "nValue": 0,
         "sValue": "value",
         "factor": 1,
+        "Primary_device": True,
     },
-    meter_usage_volt: {"Type": "Voltage", "nValue": 0, "sValue": "value", "factor": 1},
+    meter_usage_volt: {
+        "Type": "Voltage",
+        "nValue": 0,
+        "sValue": "value",
+        "factor": 1,
+        "Primary_device": True,
+    },
 }
 
 device_types[central_scene] = {
@@ -180,7 +208,8 @@ device_types[central_scene] = {
         "SwitchType": 9,
         "nValue": 1,
         "sValue": "OnOff",
-        "topic": "scene/+"
+        "topic": "scene/+",
+        "Primary_device": True,
     }
 }
 
@@ -192,6 +221,19 @@ device_types[scene_activation] = {
         "SwitchType": 9,
         "nValue": 1,
         "sValue": "OnOff",
+        "Primary_device": True,
+    }
+}
+
+device_types[battery_status] = {
+    "level": {
+        "Type": "Battery_Level",
+        # "DeviceType": 244,
+        # "SubType": 62,
+        # "SwitchType": 9,
+        # "nValue": 1,
+        # "sValue": "OnOff",
+        "Primary_device": False,
     }
 }
 

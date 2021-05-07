@@ -133,21 +133,7 @@ class BasePlugin:
             Domoticz.Debug("MQTT Connection accepted")
             api.connection.subscribe_topics(self.mqttConn)
         elif Data["Verb"] == "PUBLISH":
-
-            if Data["Payload"] is not None:
-                device, command_class, device_type, payload = api.devices.parse_topic(
-                    Data["Topic"], Data["Payload"]
-                )
-
-                if device is not None:
-                    if device not in self.mqtt_unit_map:
-                        if not api.devices.registerDevice(self, Data, self.firstFree()):
-                            # Unable to register the new device, ignore
-                            return
-
-                    api.devices.updateDevice(
-                        self, Devices, Data["Topic"], Data["Payload"]
-                    )
+            api.devices.onMessage(self, Devices, Data)
 
     def onCommand(self, Unit, Command, Level, Hue):
         # Domoticz.Log(
