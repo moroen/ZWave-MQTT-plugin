@@ -34,6 +34,7 @@ device_types[multilevel_switch] = {
         "nValue": 2,
         "sValue": "value",
         "state_topic": "targetValue/set",
+        "Primary_device": True,
     }
 }
 device_types[binary_switch] = {
@@ -42,11 +43,12 @@ device_types[binary_switch] = {
         "nValue": 1,
         "sValue": "OnOff",
         "state_topic": "targetValue/set",
+        "Primary_device": True,
     }
 }
 
 device_types[binary_sensor] = {
-    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff"},
+    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "Primary_device": True},
     "Door-Window": {
         "Type": "DeviceType",
         "DeviceType": 244,
@@ -54,6 +56,7 @@ device_types[binary_sensor] = {
         "SwitchType": 11,
         "nValue": 1,
         "sValue": "OnOff",
+        "Primary_device": True,
     },
     "Motion": {
         "Type": "DeviceType",
@@ -62,6 +65,7 @@ device_types[binary_sensor] = {
         "SwitchType": 8,
         "nValue": 1,
         "sValue": "OnOff",
+        "Primary_device": True,
     },
 }
 
@@ -73,6 +77,7 @@ device_types[notification] = {
         "SwitchType": 11,
         "nValue": 1,
         "sValue": "OnOff",
+        "Primary_device": True,
     },
     "Smoke_Alarm/Sensor_status": {
         "Type": "DeviceType",
@@ -81,6 +86,7 @@ device_types[notification] = {
         "SwitchType": 5,
         "nValue": 1,
         "sValue": "OnOff",
+        "Primary_device": True,
     },
     "Smoke_Alarm/Alarm_status": {
         "Type": "DeviceType",
@@ -88,15 +94,8 @@ device_types[notification] = {
         "SubType": 62,
         "SwitchType": 5,
         "nValue": 1,
-        "sValue": "OnOff"
-        #    },
-        #    "Door_state": {
-        #        "Type": "DeviceType",
-        #        "DeviceType": 244,
-        #        "SubType": 73,
-        #        "SwitchType": 11,
-        #        "nValue": 1,
-        #        "sValue": "OnOff"
+        "sValue": "OnOff",
+        "Primary_device": True,
     },
 }
 
