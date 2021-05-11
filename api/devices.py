@@ -135,8 +135,16 @@ def update_device_property(plugin, Devices, Data):
             unit = plugin.mqtt_unit_map[aDevice]
             # For scene activation use Off as value
             # For other devices use the same value
-            nValue = 0 if (scene_activation in aDevice or central_scene in aDevice) else Devices[unit].nValue
-            sValue = "Off" if (scene_activation in aDevice or central_scene in aDevice) else Devices[unit].sValue
+            nValue = (
+                0
+                if (scene_activation in aDevice or central_scene in aDevice)
+                else Devices[unit].nValue
+            )
+            sValue = (
+                "Off"
+                if (scene_activation in aDevice or central_scene in aDevice)
+                else Devices[unit].sValue
+            )
 
             if typedef["Type"] == "Battery_Level":
                 batteryLevel = int(payload["value"])
