@@ -81,6 +81,13 @@ def parse_topic(topic, payload=None):
             device_type = None
             return device_id, command_class, device_type, payload
 
+    # Combine 65537 (acumulated) and 66049 (usage) into usage
+    if meter in topic:
+        if meter_usage_acummulated in topic:
+            match = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/", topic)
+            device_id = match.group(0) + meter_usage
+            device_type = meter_usage_acummulated
+
     return device_id, command_class, device_type, payload
 
 
@@ -126,11 +133,16 @@ def update_device_property(plugin, Devices, Data):
         res = regx.match(aDevice)
         if res is not None:
             unit = plugin.mqtt_unit_map[aDevice]
+            # For scene activation use Off as value
+            # For other devices use the same value
+            nValue = 0 if (scene_activation in aDevice or central_scene in aDevice) else Devices[unit].nValue
+            sValue = "Off" if (scene_activation in aDevice or central_scene in aDevice) else Devices[unit].sValue
+
             if typedef["Type"] == "Battery_Level":
                 batteryLevel = int(payload["value"])
                 Devices[unit].Update(
-                    nValue=Devices[unit].nValue,
-                    sValue=Devices[unit].sValue,
+                    nValue=nValue,
+                    sValue=sValue,
                     BatteryLevel=batteryLevel,
                 )
 
@@ -147,6 +159,12 @@ def indexRegisteredDevices(plugin, Devices):
 
 
 def registerDevice(plugin, Data, new_unit_id):
+
+    Domoticz.Debug(
+        "registerDevice called with topic: {} and payload {}".format(
+            Data["Topic"], Data["Payload"]
+        )
+    )
 
     device_id, command_class, device_type, payload = parse_topic(
         Data["Topic"], Data["Payload"]
@@ -207,6 +225,12 @@ def registerDevice(plugin, Data, new_unit_id):
 def updateDevice(plugin, Devices, Data):
     nValue = 0
     sValue = ""
+
+    Domoticz.Debug(
+        "updateDevice called with topic: {} and payload {}".format(
+            Data["Topic"], Data["Payload"]
+        )
+    )
 
     device_id, command_class, device_type, payload = parse_topic(
         Data["Topic"], Data["Payload"]
@@ -271,6 +295,8 @@ def updateDevice(plugin, Devices, Data):
             if payload.get("value") is not None:
                 # zwavejs2mqtt reports a value if a scene button actually are pressed
                 Devices[unit].Update(nValue=1, sValue="On")
+            else:
+                Domoticz.Debug("Central scene controller with empty value, skipping...")
             return
 
         if scene_activation in command_class:
