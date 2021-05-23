@@ -14,15 +14,15 @@ from .device_types import (
     meter_usage_acummulated,
     meter_usage_ampere,
     meter_usage_volt,
-    device_types,
     get_typedef,
+    get_device_types,
     get_humidity_level,
     thermostat,
     notification,
     battery_status,
 )
 
-from json import loads
+from json import loads, dumps
 from re import search, match, compile
 
 
@@ -416,3 +416,5 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
             "Payload": payload,
         }
     )
+
+

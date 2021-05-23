@@ -1,0 +1,188 @@
+/113/:
+  Access_Control/Door_state:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 73
+    SwitchType: 11
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+  Smoke_Alarm/Alarm_status:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 5
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+  Smoke_Alarm/Sensor_status:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 5
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+/128/:
+  level:
+    Enabled: true
+    Primary_device: false
+    Type: Battery_Level
+/37/:
+  currentValue:
+    Enabled: true
+    Primary_device: true
+    Type: Switch
+    nValue: 1
+    sValue: OnOff
+    state_topic: targetValue/set
+/38/:
+  currentValue:
+    Enabled: true
+    Primary_device: true
+    Type: Dimmer
+    nValue: 2
+    sValue: value
+    state_topic: targetValue/set
+/43/:
+  sceneId:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 9
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+/48/:
+  Any:
+    Enabled: true
+    Primary_device: true
+    Type: Switch
+    nValue: 1
+    sValue: OnOff
+  Door-Window:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 73
+    SwitchType: 11
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+  Motion:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 8
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+/49/:
+  Air_temperature:
+    Enabled: true
+    Primary_device: true
+    Type: Temperature
+    factor: 1
+    nValue: 0
+    sValue: value
+  Air_temperature_combined:
+    Enabled: true
+    Primary_device: true
+    Type: Temp+Hum
+    factor: 1
+    nValue: 0
+    sValue: value;
+  Humidity:
+    Enabled: true
+    Primary_device: true
+    Type: Humidity
+    factor: 1
+    nValue: value
+    sValue: humidity_level
+  Humidity_combined:
+    Enabled: true
+    Primary_device: true
+    Type: Temp+Hum
+    factor: 1
+    nValue: 0
+    sValue: ;value;hum
+  Illuminance:
+    Enabled: true
+    Primary_device: true
+    Type: Illumination
+    factor: 1
+    nValue: 0
+    sValue: value
+  Power:
+    Enabled: true
+    Primary_device: true
+    Type: Usage
+    factor: 1
+    nValue: 0
+    sValue: value
+/50/:
+  value/65537:
+    Enabled: true
+    Primary_device: true
+    Type: kWh
+    factor: 1000
+    nValue: 0
+    sValue: ;value
+  value/66049:
+    Enabled: true
+    Primary_device: true
+    Type: kWh
+    factor: 1
+    nValue: 0
+    sValue: value;
+  value/66561:
+    Enabled: true
+    Primary_device: true
+    Type: Voltage
+    factor: 1
+    nValue: 0
+    sValue: value
+  value/66817:
+    Enabled: true
+    Primary_device: true
+    Type: Current (Single)
+    factor: 1
+    nValue: 0
+    sValue: value
+/67/:
+  setpoint/1:
+    DeviceType: 242
+    Enabled: true
+    Primary_device: true
+    SubType: 1
+    SwitchType: 0
+    Type: DeviceType
+    factor: 1
+    nValue: 0
+    sValue: value
+  setpoint/11:
+    DeviceType: 242
+    Enabled: true
+    Primary_device: true
+    SubType: 1
+    SwitchType: 0
+    Type: DeviceType
+    factor: 1
+    nValue: 0
+    sValue: value
+/91/:
+  scene:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 9
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+    topic: scene/+

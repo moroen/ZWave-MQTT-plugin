@@ -32,6 +32,11 @@
     </params>
 </plugin>
 """
+
+# Get full import path
+import site
+site.main()
+
 import Domoticz
 
 # from Domoticz import Devices, Parameters
@@ -42,8 +47,7 @@ import json
 
 from uuid import getnode
 import api.devices
-import api.connection
-
+from api.connection import subscribe_topics
 
 class mqtt_device:
     pass
@@ -72,6 +76,8 @@ class BasePlugin:
 
     def onStart(self):
         Domoticz.Debug("onStart called")
+        from os.path import dirname
+        api.device_types.get_device_types()
 
         if Parameters["Mode6"] != "0":
             try:
@@ -131,7 +137,7 @@ class BasePlugin:
 
         if Data["Verb"] == "CONNACK":
             Domoticz.Debug("MQTT Connection accepted")
-            api.connection.subscribe_topics(self.mqttConn)
+            subscribe_topics(self.mqttConn)
         elif Data["Verb"] == "PUBLISH":
             api.devices.onMessage(self, Devices, Data)
 
