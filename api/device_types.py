@@ -20,7 +20,6 @@ meter_usage_acummulated = "value/65537"
 meter_usage_volt = "value/66561"
 meter_usage_ampere = "value/66817"
 
-device_types = {}
 
 # nValue 0: Always 0
 # nValue 1: 0 when value == 0 else 1
@@ -31,22 +30,26 @@ device_types = {}
 # sValue 'value;' set first part of multipart string to value
 # sValue ';value' set second part of multipart string to value
 
+_global_device_types_file = "{}/device_types.yml".format(dirname(__file__))
+_user_device_types_file = "{}/../user_types.yml".format(dirname(__file__))
 
-def get_device_types():
-    global device_types
-    user_types = {}
+_default_device_types = {}
+_user_device_types = {}
+device_types = {}
 
-    if len(device_types) == 0:
+def get_device_types(reload=False):
+    global device_types, _default_device_types, _user_device_types
+
+    if len(device_types) == 0 or reload:
         from yaml import load, FullLoader
-        with open("{}/device_types.yml".format(dirname(__file__))) as file:
-            device_types = load(file, FullLoader)
+        with open(_global_device_types_file) as file:
+            _default_device_types = load(file, FullLoader)
 
-        if exists("{}/../user_types.yml".format(dirname(__file__))):
-            with open("{}/../user_types.yml".format(dirname(__file__))) as file:
-                user_types = load(file, FullLoader) 
+        if exists(_user_device_types_file):
+            with open(_user_device_types_file) as file:
+                _user_device_types = load(file, FullLoader) 
 
-        device_types = merge_dicts(device_types, user_types)
-
+    device_types = merge_dicts(_default_device_types, _user_device_types)
     return device_types
 
 def get_typedef(command_class, device_type):

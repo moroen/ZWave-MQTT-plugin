@@ -23,8 +23,8 @@ from .device_types import (
 )
 
 from json import loads, dumps
-from re import search, match, compile
-
+from re import DOTALL, search, match, compile
+from .commands import handle_plugin_command
 
 def find_sensor_type(device_id):
     i = device_id.rfind("/")
@@ -92,7 +92,10 @@ def parse_topic(topic, payload=None):
 
 
 def onMessage(plugin, Devices, Data):
-    if Data["Payload"] is not None:
+    if Data["Topic"].startswith("zwave-mqtt/"):
+        handle_plugin_command(plugin, Data)
+
+    elif Data["Payload"] is not None:
         device, command_class, device_type, payload = parse_topic(
             Data["Topic"], Data["Payload"]
         )

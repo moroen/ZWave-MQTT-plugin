@@ -47,7 +47,7 @@ import json
 
 from uuid import getnode
 import api.devices
-from api.connection import subscribe_topics
+from api.connection import subscribe_topics, connect_to_broker
 
 class mqtt_device:
     pass
@@ -88,14 +88,8 @@ class BasePlugin:
         api.devices.indexRegisteredDevices(self, Devices)
 
         self.messageQueue = []
-        self.mqttConn = Domoticz.Connection(
-            Name="MQTT Test",
-            Transport="TCP/IP",
-            Protocol="MQTT",
-            Address=Parameters["Address"],
-            Port=Parameters["Port"],
-        )
-        self.mqttConn.Connect()
+        
+        connect_to_broker(self, address=Parameters["Address"], port=Parameters["Port"])
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -133,11 +127,13 @@ class BasePlugin:
         # Domoticz.Log("onMessage called")
         # DumpDictionaryToLog(Data)
 
-        importlib.reload(api)
+        Domoticz.Debug("onMessage called: Verb: {}".format(Data["Verb"]))
 
         if Data["Verb"] == "CONNACK":
             Domoticz.Debug("MQTT Connection accepted")
             subscribe_topics(self.mqttConn)
+        elif Data["Verb"] == "SUBACK":
+            pass
         elif Data["Verb"] == "PUBLISH":
             api.devices.onMessage(self, Devices, Data)
 
