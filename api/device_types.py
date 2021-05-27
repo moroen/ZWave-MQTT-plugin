@@ -1,4 +1,7 @@
+from typing import Mapping
 from Domoticz import Log, Error, Debug
+from os.path import dirname, exists
+from .utils import merge_dicts
 
 # Command classes
 binary_switch = "/37/"
@@ -17,7 +20,6 @@ meter_usage_acummulated = "value/65537"
 meter_usage_volt = "value/66561"
 meter_usage_ampere = "value/66817"
 
-device_types = {}
 
 # nValue 0: Always 0
 # nValue 1: 0 when value == 0 else 1
@@ -28,213 +30,53 @@ device_types = {}
 # sValue 'value;' set first part of multipart string to value
 # sValue ';value' set second part of multipart string to value
 
-device_types[multilevel_switch] = {
-    "currentValue": {
-        "Type": "Dimmer",
-        "nValue": 2,
-        "sValue": "value",
-        "state_topic": "targetValue/set",
-        "Primary_device": True,
-    }
-}
-device_types[binary_switch] = {
-    "currentValue": {
-        "Type": "Switch",
-        "nValue": 1,
-        "sValue": "OnOff",
-        "state_topic": "targetValue/set",
-        "Primary_device": True,
-    }
-}
+_global_device_types_file = "{}/device_types.yml".format(dirname(__file__))
+_user_device_types_file = "{}/../user_types.yml".format(dirname(__file__))
 
-device_types[binary_sensor] = {
-    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "Primary_device": True},
-    "Door-Window": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 73,
-        "SwitchType": 11,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    },
-    "Motion": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 62,
-        "SwitchType": 8,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    },
-}
-
-device_types[notification] = {
-    "Access_Control/Door_state": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 73,
-        "SwitchType": 11,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    },
-    "Smoke_Alarm/Sensor_status": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 62,
-        "SwitchType": 5,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    },
-    "Smoke_Alarm/Alarm_status": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 62,
-        "SwitchType": 5,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    },
-}
+_default_device_types = {}
+_user_device_types = {}
+device_types = {}
 
 
-device_types[thermostat] = {
-    "setpoint/1": {
-        "Type": "DeviceType",
-        "DeviceType": 242,
-        "SubType": 1,
-        "SwitchType": 0,
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "setpoint/11": {
-        "Type": "DeviceType",
-        "DeviceType": 242,
-        "SubType": 1,
-        "SwitchType": 0,
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-}
+def get_device_types(reload=False):
+    global device_types, _default_device_types, _user_device_types
 
-device_types[multilevel_sensor] = {
-    "Illuminance": {
-        "Type": "Illumination",
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "Power": {
-        "Type": "Usage",
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "Humidity": {
-        "Type": "Humidity",
-        "nValue": "value",
-        "sValue": "humidity_level",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "Air_temperature": {
-        "Type": "Temperature",
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "Humidity_combined": {
-        "Type": "Temp+Hum",
-        "nValue": 0,
-        "sValue": ";value;hum",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    "Air_temperature_combined": {
-        "Type": "Temp+Hum",
-        "nValue": 0,
-        "sValue": "value;",
-        "factor": 1,
-        "Primary_device": True,
-    },
-}
+    if len(device_types) == 0 or reload:
+        from yaml import load, FullLoader
 
-device_types[meter] = {
-    meter_usage: {
-        "Type": "kWh",
-        "nValue": 0,
-        "sValue": "value;",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    meter_usage_acummulated: {
-        "Type": "kWh",
-        "nValue": 0,
-        "sValue": ";value",
-        "factor": 1000,
-        "Primary_device": True,
-    },
-    meter_usage_ampere: {
-        "Type": "Current (Single)",
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-    meter_usage_volt: {
-        "Type": "Voltage",
-        "nValue": 0,
-        "sValue": "value",
-        "factor": 1,
-        "Primary_device": True,
-    },
-}
+        with open(_global_device_types_file) as file:
+            _default_device_types = load(file, FullLoader)
 
-device_types[central_scene] = {
-    "scene": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 62,
-        "SwitchType": 9,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "topic": "scene/+",
-        "Primary_device": True,
-    }
-}
+        if exists(_user_device_types_file):
+            with open(_user_device_types_file) as file:
+                _user_device_types = load(file, FullLoader)
+        else:
+            Debug("User device_types does not exist, creating default")
+            device_types = _default_device_types
 
-device_types[scene_activation] = {
-    "sceneId": {
-        "Type": "DeviceType",
-        "DeviceType": 244,
-        "SubType": 62,
-        "SwitchType": 9,
-        "nValue": 1,
-        "sValue": "OnOff",
-        "Primary_device": True,
-    }
-}
+            for cc in _default_device_types:
+                c_class = _default_device_types.get(cc)
+                print(c_class)
+                devices = {}
+                for device in c_class:
+                    print(device)
+                    typedef = get_typedef(cc, device)
+                    devices[device] = {"Enabled": typedef["Enabled"]}
 
-device_types[battery_status] = {
-    "level": {
-        "Type": "Battery_Level",
-        # "DeviceType": 244,
-        # "SubType": 62,
-        # "SwitchType": 9,
-        # "nValue": 1,
-        # "sValue": "OnOff",
-        "Primary_device": False,
-    }
-}
+                _user_device_types[cc] = devices
+
+            save_user_types()
+
+    device_types = merge_dicts(_default_device_types, _user_device_types)
+    return device_types
+
+
+def save_user_types():
+    Debug("Saving user device_types")
+    from yaml import dump
+
+    with open(_user_device_types_file, "w") as file:
+        dump(_user_device_types, file)
 
 
 def get_typedef(command_class, device_type):

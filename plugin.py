@@ -16,6 +16,12 @@
                 <option label="Encrypted (Client Certificate)" value="8884" />
             </options>
         </param>
+        <param field="Mode5" label="Purge disabled devices" width="150px">
+            <options>
+                <option label="No" value="0" default="true" />
+                <option label="Yes" value="1"/>
+            </options>
+        </param>
 
         <param field="Mode6" label="Debug" width="150px">
             <options>
@@ -32,6 +38,12 @@
     </params>
 </plugin>
 """
+
+# Get full import path
+import site
+
+site.main()
+
 import Domoticz
 
 # from Domoticz import Devices, Parameters
@@ -42,7 +54,7 @@ import json
 
 from uuid import getnode
 import api.devices
-import api.connection
+from api.connection import subscribe_topics, connect_to_broker
 
 
 class mqtt_device:
@@ -79,17 +91,21 @@ class BasePlugin:
             except ValueError:
                 Domoticz.Log("Illegal value for Debug, using default (0)")
 
+        api.device_types.get_device_types()
+
+        try:
+            if Parameters["Mode5"] == "1":
+                from api.commands import purge_disabled_devices
+
+                purge_disabled_devices(Devices)
+        except ValueError:
+            Debug("Illegal value for Purge, using default (No)")
+
         api.devices.indexRegisteredDevices(self, Devices)
 
         self.messageQueue = []
-        self.mqttConn = Domoticz.Connection(
-            Name="MQTT Test",
-            Transport="TCP/IP",
-            Protocol="MQTT",
-            Address=Parameters["Address"],
-            Port=Parameters["Port"],
-        )
-        self.mqttConn.Connect()
+
+        connect_to_broker(self, address=Parameters["Address"], port=Parameters["Port"])
 
     def onStop(self):
         Domoticz.Log("onStop called")
@@ -127,11 +143,13 @@ class BasePlugin:
         # Domoticz.Log("onMessage called")
         # DumpDictionaryToLog(Data)
 
-        importlib.reload(api)
+        Domoticz.Debug("onMessage called: Verb: {}".format(Data["Verb"]))
 
         if Data["Verb"] == "CONNACK":
             Domoticz.Debug("MQTT Connection accepted")
-            api.connection.subscribe_topics(self.mqttConn)
+            subscribe_topics(self.mqttConn)
+        elif Data["Verb"] == "SUBACK":
+            pass
         elif Data["Verb"] == "PUBLISH":
             api.devices.onMessage(self, Devices, Data)
 
