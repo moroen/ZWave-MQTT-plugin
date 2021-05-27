@@ -16,6 +16,12 @@
                 <option label="Encrypted (Client Certificate)" value="8884" />
             </options>
         </param>
+        <param field="Mode5" label="Purge disabled devices" width="150px">
+            <options>
+                <option label="No" value="0" default="true" />
+                <option label="Yes" value="1"/>
+            </options>
+        </param>
 
         <param field="Mode6" label="Debug" width="150px">
             <options>
@@ -35,6 +41,7 @@
 
 # Get full import path
 import site
+
 site.main()
 
 import Domoticz
@@ -48,6 +55,7 @@ import json
 from uuid import getnode
 import api.devices
 from api.connection import subscribe_topics, connect_to_broker
+
 
 class mqtt_device:
     pass
@@ -76,8 +84,6 @@ class BasePlugin:
 
     def onStart(self):
         Domoticz.Debug("onStart called")
-        from os.path import dirname
-        api.device_types.get_device_types()
 
         if Parameters["Mode6"] != "0":
             try:
@@ -85,10 +91,20 @@ class BasePlugin:
             except ValueError:
                 Domoticz.Log("Illegal value for Debug, using default (0)")
 
+        api.device_types.get_device_types()
+
+        try:
+            if Parameters["Mode5"] == "1":
+                from api.commands import purge_disabled_devices
+
+                purge_disabled_devices(Devices)
+        except ValueError:
+            Debug("Illegal value for Purge, using default (No)")
+
         api.devices.indexRegisteredDevices(self, Devices)
 
         self.messageQueue = []
-        
+
         connect_to_broker(self, address=Parameters["Address"], port=Parameters["Port"])
 
     def onStop(self):

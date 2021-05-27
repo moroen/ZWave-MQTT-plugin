@@ -6,6 +6,7 @@ _broker_ip = None
 _broker_port = None
 _plugin = None
 
+
 def connect_to_broker(plugin, address=None, port=None):
     global _broker_ip, _broker_port, _plugin
 
@@ -13,23 +14,25 @@ def connect_to_broker(plugin, address=None, port=None):
         _broker_ip = address
 
     if port is not None:
-        _broker_port = port        
+        _broker_port = port
 
     _plugin = plugin
 
     plugin.mqttConn = Domoticz.Connection(
-            Name="MQTT Test",
-            Transport="TCP/IP",
-            Protocol="MQTT",
-            Address=_broker_ip,
-            Port=_broker_port,
-        )
+        Name="MQTT Test",
+        Transport="TCP/IP",
+        Protocol="MQTT",
+        Address=_broker_ip,
+        Port=_broker_port,
+    )
     plugin.mqttConn.Connect()
+
 
 def reconnect_to_broker():
     Domoticz.Debug("Reconnect called")
     _plugin.mqttConn.Disconnect()
     connect_to_broker(_plugin)
+
 
 def subscribe_topics(mqttConn):
     device_types = get_device_types()

@@ -19,8 +19,9 @@ device_types = {}
 
 import yaml
 
+
 def write_defaults(file_name):
-    with open(file_name, 'w') as file:
+    with open(file_name, "w") as file:
         documents = yaml.dump(device_types, file)
 
 
@@ -55,7 +56,13 @@ device_types[binary_switch] = {
 }
 
 device_types[binary_sensor] = {
-    "Any": {"Type": "Switch", "nValue": 1, "sValue": "OnOff", "Primary_device": True, "Enabled": True},
+    "Any": {
+        "Type": "Switch",
+        "nValue": 1,
+        "sValue": "OnOff",
+        "Primary_device": True,
+        "Enabled": True,
+    },
     "Door-Window": {
         "Type": "DeviceType",
         "DeviceType": 244,

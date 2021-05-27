@@ -37,21 +37,23 @@ _default_device_types = {}
 _user_device_types = {}
 device_types = {}
 
+
 def get_device_types(reload=False):
     global device_types, _default_device_types, _user_device_types
 
     if len(device_types) == 0 or reload:
         from yaml import load, FullLoader
+
         with open(_global_device_types_file) as file:
             _default_device_types = load(file, FullLoader)
 
         if exists(_user_device_types_file):
             with open(_user_device_types_file) as file:
-                _user_device_types = load(file, FullLoader) 
+                _user_device_types = load(file, FullLoader)
         else:
             Debug("User device_types does not exist, creating default")
             device_types = _default_device_types
-            
+
             for cc in _default_device_types:
                 c_class = _default_device_types.get(cc)
                 print(c_class)
@@ -64,15 +66,18 @@ def get_device_types(reload=False):
                 _user_device_types[cc] = devices
 
             save_user_types()
-            
+
     device_types = merge_dicts(_default_device_types, _user_device_types)
     return device_types
-    
+
+
 def save_user_types():
     Debug("Saving user device_types")
     from yaml import dump
+
     with open(_user_device_types_file, "w") as file:
         dump(_user_device_types, file)
+
 
 def get_typedef(command_class, device_type):
     c_class = device_types.get(command_class)
@@ -104,4 +109,3 @@ def get_humidity_level(humidity):
         return "3"  # wet
 
     return "1"  # Comfortable
-
