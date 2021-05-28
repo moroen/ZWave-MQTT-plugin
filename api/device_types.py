@@ -56,10 +56,8 @@ def get_device_types(reload=False):
 
             for cc in _default_device_types:
                 c_class = _default_device_types.get(cc)
-                print(c_class)
                 devices = {}
                 for device in c_class:
-                    print(device)
                     typedef = get_typedef(cc, device)
                     devices[device] = {"Enabled": typedef["Enabled"]}
 

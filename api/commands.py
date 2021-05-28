@@ -7,7 +7,6 @@ from .topics import parse_topic
 
 def handle_plugin_command(plugin, Data, Devices):
     Debug("Command received with topic: {}".format(Data["Topic"]))
-    print(Data["Topic"])
     match = search("(\/command\/)(\w+)", Data["Topic"])
     if match is not None:
         if match.group(2) == "reconnect":

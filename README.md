@@ -27,6 +27,7 @@ Hint: To add all devices at once, enable the plugin in domoticz, and press "Save
 ```
 $ cd plugins
 $ git clone https://github.com/moroen/ZWave-MQTT-plugin.git ZWave-MQTT
+$ pip3 install -r requirements.txt
 ```
 Add the ZWave-MQTT plugin to domoticz, and specify the IP of the MQTT broker
 
