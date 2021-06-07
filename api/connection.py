@@ -35,24 +35,27 @@ def reconnect_to_broker():
 
 
 def subscribe_topics(mqttConn):
-    device_types = get_device_types()
-
     topics = []
 
-    for cc in device_types:
-        for device_type in device_types[cc]:
-            type_def = get_typedef(cc, device_type)
+    device_types = get_device_types()
 
-            if type_def.get("Enabled"):
-                special_topic = type_def.get("topic")
-                topic = (
-                    "zwave/+{}+/{}".format(cc, device_type)
-                    if special_topic is None
-                    else "zwave/+{}+/{}".format(cc, special_topic)
-                )
-                topics.append(
-                    {"Topic": topic, "QoS": 0},
-                )
+    if device_types is not None:
+        for cc in device_types:
+            for device_type in device_types[cc]:
+                type_def = get_typedef(cc, device_type)
+
+                if type_def.get("Enabled"):
+                    special_topic = type_def.get("topic")
+                    topic = (
+                        "zwave/+{}+/{}".format(cc, device_type)
+                        if special_topic is None
+                        else "zwave/+{}+/{}".format(cc, special_topic)
+                    )
+                    topics.append(
+                        {"Topic": topic, "QoS": 0},
+                    )
+    else:
+        Domoticz.Error("No device types defined")
 
     # Subscribe to command topic
     topics.append({"Topic": "zwave-mqtt/#", "QoS": 0})

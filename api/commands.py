@@ -1,7 +1,7 @@
 from api.device_types import get_typedef
 from re import M, search
 import re
-from Domoticz import Debug
+from Domoticz import Debug, Error
 from .topics import parse_topic
 
 
@@ -25,9 +25,14 @@ def do_reconnect():
 
 def purge_disabled_devices(Devices):
     Debug("Purging disabled devices")
+
     for unit in list(Devices):
         devID = Devices[unit].DeviceID
         device, command_class, device_type, _ = parse_topic(devID)
         typedef = get_typedef(command_class, device_type)
-        if not typedef["Enabled"]:
-            Devices[unit].Delete()
+        if typedef is not None:
+            if not typedef["Enabled"]:
+                Devices[unit].Delete()
+        else:
+            Error("Type definition not found")
+            return

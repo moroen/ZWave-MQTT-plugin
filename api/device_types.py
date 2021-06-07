@@ -30,7 +30,7 @@ meter_usage_ampere = "value/66817"
 # sValue 'value;' set first part of multipart string to value
 # sValue ';value' set second part of multipart string to value
 
-_global_device_types_file = "{}/device_types.yml".format(dirname(__file__))
+_global_device_types_file = "{}/../device_types.yml".format(dirname(__file__))
 _user_device_types_file = "{}/../user_types.yml".format(dirname(__file__))
 
 _default_device_types = {}
@@ -44,26 +44,30 @@ def get_device_types(reload=False):
     if len(device_types) == 0 or reload:
         from yaml import load, FullLoader
 
-        with open(_global_device_types_file) as file:
-            _default_device_types = load(file, FullLoader)
+        try:
+            with open(_global_device_types_file) as file:
+                _default_device_types = load(file, FullLoader)
 
-        if exists(_user_device_types_file):
-            with open(_user_device_types_file) as file:
-                _user_device_types = load(file, FullLoader)
-        else:
-            Debug("User device_types does not exist, creating default")
-            device_types = _default_device_types
+            if exists(_user_device_types_file):
+                with open(_user_device_types_file) as file:
+                    _user_device_types = load(file, FullLoader)
+            else:
+                Debug("User device_types does not exist, creating default")
+                device_types = _default_device_types
 
-            for cc in _default_device_types:
-                c_class = _default_device_types.get(cc)
-                devices = {}
-                for device in c_class:
-                    typedef = get_typedef(cc, device)
-                    devices[device] = {"Enabled": typedef["Enabled"]}
+                for cc in _default_device_types:
+                    c_class = _default_device_types.get(cc)
+                    devices = {}
+                    for device in c_class:
+                        typedef = get_typedef(cc, device)
+                        devices[device] = {"Enabled": typedef["Enabled"]}
 
-                _user_device_types[cc] = devices
+                    _user_device_types[cc] = devices
 
-            save_user_types()
+                save_user_types()
+        except FileNotFoundError:
+            Error("Device definitions not found")
+            return
 
     device_types = merge_dicts(_default_device_types, _user_device_types)
     return device_types
