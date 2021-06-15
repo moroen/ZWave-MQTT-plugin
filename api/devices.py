@@ -26,6 +26,7 @@ from json import loads, dumps
 from re import DOTALL, search, match, compile
 from .commands import handle_plugin_command
 from .topics import parse_topic
+from .config import get_mqtt_config
 
 
 def find_sensor_type(device_id):
@@ -39,7 +40,9 @@ def find_device_id(device_id):
 
 
 def onMessage(plugin, Devices, Data):
-    if Data["Topic"].startswith("zwave-mqtt/"):
+    conf = get_mqtt_config()
+
+    if Data["Topic"].startswith("{}/".format(conf["CommandTopic"])):
         handle_plugin_command(plugin, Data, Devices)
 
     elif Data["Payload"] is not None:
@@ -134,6 +137,9 @@ def registerDevice(plugin, Data, new_unit_id):
 
     nodeName = payload.get("nodeName")
     nodeLocation = payload.get("nodeLocation")
+
+    if nodeLocation is None:
+        nodeLocation = ""
 
     if nodeName is not None:
         if nodeName != "":
@@ -316,12 +322,19 @@ def updateDevice(plugin, Devices, Data):
             sValue = get_humidity_level(payload["value"])
 
         Domoticz.Debug("nValue: {} sValue: {}".format(nValue, sValue))
-        Devices[unit].Update(nValue=nValue, sValue=sValue)
+
+        current_nValue = Devices[unit].nValue
+        current_sValue = Devices[unit].sValue
+
+        if (nValue != current_nValue) or (sValue != current_sValue):
+            Devices[unit].Update(nValue=nValue, sValue=sValue)
 
 
 def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
     payload = None
     topic = None
+
+    conf = get_mqtt_config()
 
     device_id, command_class, device_type, payload = parse_topic(DeviceID)
 
@@ -340,22 +353,23 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
         if multilevel_switch in DeviceID:
             payload = '{{"value": {}}}'.format(255)
         elif binary_switch in DeviceID:
-            payload = '{{"value": true}'
+            payload = '{"value": true}'
 
     elif Command == "Off":
         if multilevel_switch in DeviceID:
             payload = '{"value": 0}'
         elif binary_switch in DeviceID:
+            print("binary")
             payload = '{"value": false}'
 
     elif Command == "Set Level":
         payload = '{{"value": {}}}'.format(Level)
 
     if typedef.get("state_topic") is not None:
-        res = search("\/[0-9]{1,3}\/[0-9]{2,3}\/[0-9]{1,2}\/", device_id)
-        topic = "zwave{}{}".format(res.group(0), typedef["state_topic"])
+        res = search(conf["DeviceRegX"], device_id)
+        topic = "{}{}{}{}/{}".format(conf["BaseTopic"], res.group(1), res.group(2), res.group(3), typedef["state_topic"])
     else:
-        topic = "zwave{}/set".format(device_id)
+        topic = "{}{}/set".format(conf["BaseTopic"], device_id)
 
     plugin.sendMessage(
         {

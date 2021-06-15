@@ -3,7 +3,6 @@ try:
 except ModuleNotFoundError:
     pass
 
-from io import DEFAULT_BUFFER_SIZE
 from Domoticz import Debug
 from .device_types import (
     multilevel_switch,
@@ -26,9 +25,14 @@ from .device_types import (
 
 from json import loads, dumps
 from re import DOTALL, search, match, compile
-
+from .config import get_mqtt_config
 
 def parse_topic(topic, payload=None):
+
+    Domoticz.Debug(topic)
+
+    conf = get_mqtt_config()
+
     if payload is not None:
 
         try:
@@ -41,7 +45,7 @@ def parse_topic(topic, payload=None):
             return device_id, command_class, device_type, payload
 
     try:
-        res = search("(\/[0-9]{1,3})(\/[0-9]{2,3}\/)([0-9]{1,2})\/(.*)", topic)
+        res = search(conf["DeviceRegX"], topic)
 
         if res is None:
             Domoticz.Debug("Unparsable topic received: {}".format(topic))

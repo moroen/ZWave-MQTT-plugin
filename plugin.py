@@ -3,7 +3,7 @@
 # Author: moroen (https://github.com/moroen) & heggink (https://github.com/heggink)
 #
 """
-<plugin key="BasePlug" name="ZWave-MQTT" author="moroen / heggink" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
+<plugin key="ZWave-MQTT" name="ZWave-MQTT version 0.0.1" author="moroen / heggink" version="0.0.1" wikilink="https://github.com/moroen/ZWave-MQTT-plugin/wiki" externallink="https://github.com/moroen/ZWave-MQTT-plugin">
     <description>
         <h2>Zwave MQTT</h2><br/>
     </description>
@@ -55,6 +55,9 @@ import json
 from uuid import getnode
 import api.devices
 from api.connection import subscribe_topics, connect_to_broker
+from api.config import set_config_location
+
+from os.path import dirname
 
 
 class mqtt_device:
@@ -85,6 +88,8 @@ class BasePlugin:
     def onStart(self):
         Domoticz.Debug("onStart called")
 
+        set_config_location(dirname(__file__))
+
         if Parameters["Mode6"] != "0":
             try:
                 Domoticz.Debugging(int(Parameters["Mode6"]))
@@ -114,7 +119,7 @@ class BasePlugin:
         # Domoticz.Log("onConnect called")
         if Status == 0:
             Domoticz.Debug("MQTT connected successfully.")
-            sendData = {"Verb": "CONNECT", "ID": str(getnode())}
+            sendData = {"Verb": "CONNECT", "ID": "zwave-{}".format(getnode())}
             Connection.Send(sendData)
             while len(self.messageQueue) > 0:
                 #                sendMessage(self.messageQueue.pop(0))  # send out all messages queued

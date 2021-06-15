@@ -2,6 +2,7 @@ from typing import Mapping
 from Domoticz import Log, Error, Debug
 from os.path import dirname, exists
 from .utils import merge_dicts
+from .config import get_global_device_types_filename, get_user_device_types_filename
 
 # Command classes
 binary_switch = "/37/"
@@ -30,9 +31,6 @@ meter_usage_ampere = "value/66817"
 # sValue 'value;' set first part of multipart string to value
 # sValue ';value' set second part of multipart string to value
 
-_global_device_types_file = "{}/../device_types.yml".format(dirname(__file__))
-_user_device_types_file = "{}/../user_types.yml".format(dirname(__file__))
-
 _default_device_types = {}
 _user_device_types = {}
 device_types = {}
@@ -45,11 +43,11 @@ def get_device_types(reload=False):
         from yaml import load, FullLoader
 
         try:
-            with open(_global_device_types_file) as file:
+            with open(get_global_device_types_filename()) as file:
                 _default_device_types = load(file, FullLoader)
 
-            if exists(_user_device_types_file):
-                with open(_user_device_types_file) as file:
+            if exists(get_user_device_types_filename()):
+                with open(get_user_device_types_filename()) as file:
                     _user_device_types = load(file, FullLoader)
             else:
                 Debug("User device_types does not exist, creating default")
@@ -66,9 +64,9 @@ def get_device_types(reload=False):
 
                 save_user_types()
         except FileNotFoundError:
-            Error("Device definitions not found")
+            Error("Device definitions not found...")
             return
-
+       
     device_types = merge_dicts(_default_device_types, _user_device_types)
     return device_types
 
@@ -77,7 +75,7 @@ def save_user_types():
     Debug("Saving user device_types")
     from yaml import dump
 
-    with open(_user_device_types_file, "w") as file:
+    with open(get_user_device_types_filename(), "w") as file:
         dump(_user_device_types, file)
 
 
