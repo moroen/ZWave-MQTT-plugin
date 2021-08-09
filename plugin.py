@@ -16,6 +16,8 @@
                 <option label="Encrypted (Client Certificate)" value="8884" />
             </options>
         </param>
+        <param field="Username" label="MQTT Username (optional)" width="300px" required="false" default=""/>
+        <param field="Password" label="MQTT Password (optional)" width="300px" required="false" default="" password="true"/>
         <param field="Mode5" label="Purge disabled devices" width="150px">
             <options>
                 <option label="No" value="0" default="true" />
