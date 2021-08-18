@@ -27,6 +27,7 @@ from re import DOTALL, search, match, compile
 from .commands import handle_plugin_command
 from .topics import parse_topic
 from .config import get_mqtt_config
+from .tradfri import whiteOptions, colorOptions
 
 
 def find_sensor_type(device_id):
@@ -163,7 +164,23 @@ def registerDevice(plugin, Data, new_unit_id):
                     DeviceID=device_id,
                 ).Create()
             elif typedef["Type"] == "TradfriWS":
-                pass
+                Domoticz.Device(
+                    Name=device_name + " - WB",
+                    Unit=new_unit_id,
+                    TypeName="Selector Switch",
+                    Switchtype=18,
+                    Options=whiteOptions,
+                    DeviceID=device_id,
+                ).Create()
+            elif typedef["Type"] == "TradfriCWS":
+                Domoticz.Device(
+                    Name=device_name + " - CWS",
+                    Unit=new_unit_id,
+                    TypeName="Selector Switch",
+                    Switchtype=18,
+                    Options=colorOptions,
+                    DeviceID=device_id,
+                ).Create()
             else:
                 Domoticz.Device(
                     Name=device_name,
