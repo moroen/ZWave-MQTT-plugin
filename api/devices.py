@@ -332,8 +332,9 @@ def updateDevice(plugin, Devices, Data):
             )
 
         elif typedef["sValue"] == "OnOff":
-            val = str(payload["value"])
-            if val == "True" or val == "22":
+            valstr = str(payload["value"])
+            valint = int(payload["value"])
+            if valstr == "True" or valint > 0:
                 sValue = "On"
                 nValue = 1
             else:
