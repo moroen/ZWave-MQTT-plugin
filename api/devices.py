@@ -150,6 +150,7 @@ def registerDevice(plugin, Data, new_unit_id):
             )
 
     if typedef is not None:
+        Domoticz.Debug("Registering device with typedef: {}".format(typedef))
         if typedef["Primary_device"]:
             if typedef["Type"] == "DeviceType":
                 Domoticz.Device(
@@ -158,8 +159,11 @@ def registerDevice(plugin, Data, new_unit_id):
                     Type=typedef["DeviceType"],
                     Subtype=typedef["SubType"],
                     Switchtype=typedef["SwitchType"],
+                    Image=typedef["Image"],
                     DeviceID=device_id,
                 ).Create()
+            elif typedef["Type"] == "TradfriWS":
+                pass
             else:
                 Domoticz.Device(
                     Name=device_name,
@@ -367,7 +371,13 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
 
     if typedef.get("state_topic") is not None:
         res = search(conf["DeviceRegX"], device_id)
-        topic = "{}{}{}{}/{}".format(conf["BaseTopic"], res.group(1), res.group(2), res.group(3), typedef["state_topic"])
+        topic = "{}{}{}{}/{}".format(
+            conf["BaseTopic"],
+            res.group(1),
+            res.group(2),
+            res.group(3),
+            typedef["state_topic"],
+        )
     else:
         topic = "{}{}/set".format(conf["BaseTopic"], device_id)
 

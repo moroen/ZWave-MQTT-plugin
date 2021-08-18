@@ -27,6 +27,7 @@ from json import loads, dumps
 from re import DOTALL, search, match, compile
 from .config import get_mqtt_config
 
+
 def parse_topic(topic, payload=None):
 
     Domoticz.Debug(topic)

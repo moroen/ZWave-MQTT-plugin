@@ -5,9 +5,11 @@ _config_basedir = None
 
 _config = None
 
+
 def set_config_location(path):
     global _config_basedir
     _config_basedir = path
+
 
 def get_mqtt_config(reload=False):
     global _config
@@ -19,11 +21,13 @@ def get_mqtt_config(reload=False):
         except FileNotFoundError:
             Error("Configuration not found...")
             return
-    
+
     return _config
+
 
 def get_global_device_types_filename():
     return "{}/{}".format(_config_basedir, "device_types.yml")
+
 
 def get_user_device_types_filename():
     return "{}/{}".format(_config_basedir, "user_types.yml")
