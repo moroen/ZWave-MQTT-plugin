@@ -9,6 +9,7 @@ _broker_ip = None
 _broker_port = None
 _plugin = None
 
+
 def connect_to_broker(plugin, address=None, port=None):
     global _broker_ip, _broker_port, _plugin
 
@@ -54,7 +55,9 @@ def subscribe_topics(mqttConn):
                         topic = (
                             "{}/+{}+/{}".format(conf["BaseTopic"], cc, device_type)
                             if special_topic is None
-                            else "{}/+{}+/{}".format(conf["BaseTopic"], cc, special_topic)
+                            else "{}/+{}+/{}".format(
+                                conf["BaseTopic"], cc, special_topic
+                            )
                         )
                         topics.append(
                             {"Topic": topic, "QoS": 0},

@@ -27,6 +27,7 @@ from re import DOTALL, search, match, compile
 from .commands import handle_plugin_command
 from .topics import parse_topic
 from .config import get_mqtt_config
+from .tradfri import whiteOptions, colorOptions
 
 
 def find_sensor_type(device_id):
@@ -150,6 +151,7 @@ def registerDevice(plugin, Data, new_unit_id):
             )
 
     if typedef is not None:
+        Domoticz.Debug("Registering device with typedef: {}".format(typedef))
         if typedef["Primary_device"]:
             if typedef["Type"] == "DeviceType":
                 Domoticz.Device(
@@ -158,6 +160,25 @@ def registerDevice(plugin, Data, new_unit_id):
                     Type=typedef["DeviceType"],
                     Subtype=typedef["SubType"],
                     Switchtype=typedef["SwitchType"],
+                    Image=typedef["Image"],
+                    DeviceID=device_id,
+                ).Create()
+            elif typedef["Type"] == "TradfriWS":
+                Domoticz.Device(
+                    Name=device_name + " - WB",
+                    Unit=new_unit_id,
+                    TypeName="Selector Switch",
+                    Switchtype=18,
+                    Options=whiteOptions,
+                    DeviceID=device_id,
+                ).Create()
+            elif typedef["Type"] == "TradfriCWS":
+                Domoticz.Device(
+                    Name=device_name + " - CWS",
+                    Unit=new_unit_id,
+                    TypeName="Selector Switch",
+                    Switchtype=18,
+                    Options=colorOptions,
                     DeviceID=device_id,
                 ).Create()
             else:
@@ -368,7 +389,13 @@ def OnCommand(plugin, DeviceID, Command, Level=None, Hue=None):
 
     if typedef.get("state_topic") is not None:
         res = search(conf["DeviceRegX"], device_id)
-        topic = "{}{}{}{}/{}".format(conf["BaseTopic"], res.group(1), res.group(2), res.group(3), typedef["state_topic"])
+        topic = "{}{}{}{}/{}".format(
+            conf["BaseTopic"],
+            res.group(1),
+            res.group(2),
+            res.group(3),
+            typedef["state_topic"],
+        )
     else:
         topic = "{}{}/set".format(conf["BaseTopic"], device_id)
 

@@ -66,7 +66,7 @@ def get_device_types(reload=False):
         except FileNotFoundError:
             Error("Device definitions not found...")
             return
-       
+
     device_types = merge_dicts(_default_device_types, _user_device_types)
     return device_types
 
@@ -98,6 +98,10 @@ def get_typedef(command_class, device_type):
             )
         )
         return
+
+    image = typedef.get("Image")
+    if image is None:
+        typedef["Image"] = 0
 
     return typedef
 
