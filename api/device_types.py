@@ -14,6 +14,7 @@ thermostat = "/67/"
 central_scene = "/91/"
 notification = "/113/"
 battery_status = "/128/"
+sensor_alarm = "/156/"
 
 meter = "/50/"
 meter_usage = "value/66049"
