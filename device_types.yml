@@ -26,6 +26,24 @@
     Type: DeviceType
     nValue: 1
     sValue: OnOff
+  Home_Security/Motion_sensor_status:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 8
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
+  Home_Security/Cover_status:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 8
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
 /128/:
   level:
     Enabled: true
@@ -134,6 +152,13 @@
     Type: Usage
     factor: 1
     nValue: 0
+    sValue: value
+  Carbon_dioxide_CO_level:
+    Enabled: true
+    Primary_device: true
+    Type: Air Quality
+    factor: 1
+    nValue: value
     sValue: value
 /50/:
   value/65537:
