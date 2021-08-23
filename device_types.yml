@@ -49,6 +49,16 @@
     Enabled: true
     Primary_device: false
     Type: Battery_Level
+/156/:
+  state/0:
+    DeviceType: 244
+    Enabled: true
+    Primary_device: true
+    SubType: 62
+    SwitchType: 8
+    Type: DeviceType
+    nValue: 1
+    sValue: OnOff
 /37/:
   currentValue:
     Enabled: true
