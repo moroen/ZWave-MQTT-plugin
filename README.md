@@ -15,6 +15,7 @@ Open the browser http://localhost:8091.
     - Select serial port
 - MQTT configuration: 
     - Set the IP (Host URL) of the MQTT broker
+    - best to switch OFF the retain flag (otherwise, deleted devices keep reappearing until you manually delete the messages from the broker)
 - Gateway configuration: 
     - Use node names instead of numeric nodeIDs: Off
     - Ignore location: On
@@ -32,7 +33,7 @@ $ pip3 install -r requirements.txt
 Add the ZWave-MQTT plugin to domoticz, and specify the IP of the MQTT broker
 
 ## Usage
-Devices will be added to domoticz on the first status change. To add a device to domoticz, toggle the device by any other means, like using the zwave control-planel of zwavejs2mqtt
+Devices will be added to domoticz on the first status change. To add a device to domoticz, toggle the device by any other means, like using the zwave control-planel of zwavejs2mqtt. Battery devices need to be woken up. You can also re-interview nodes and, worst case, re-include but that should not be needed.
 
 ## Implemented command classes
 - 37 Switch binary
