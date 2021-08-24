@@ -2,6 +2,7 @@
 
 # ZWave-MQTT-plugin
 A domoticz plugin for zwave over MQTT
+When switching from OZW, disable the OZW hardware in domoticz prior to installing zwavejs2mqtt!
 
 ## Install and run zwavejs2mqtt
 ```
@@ -33,7 +34,7 @@ $ pip3 install -r requirements.txt
 Add the ZWave-MQTT plugin to domoticz, and specify the IP of the MQTT broker
 
 ## Usage
-Devices will be added to domoticz on the first status change. To add a device to domoticz, toggle the device by any other means, like using the zwave control-planel of zwavejs2mqtt. Battery devices need to be woken up. You can also re-interview nodes and, worst case, re-include but that should not be needed.
+Devices will be (automatically) added to domoticz on the first status change. To add a device to domoticz, toggle the device by any other means, like using the zwave control-planel of zwavejs2mqtt. Battery devices need to be woken up. You can also re-interview nodes and, worst case, re-include but that should not be needed.
 
 ## Implemented command classes
 - 37 Switch binary
