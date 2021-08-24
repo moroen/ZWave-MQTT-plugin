@@ -1,8 +1,7 @@
 [![Lint with black](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml/badge.svg)](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml)
 
 # ZWave-MQTT-plugin
-A domoticz plugin for zwave over MQTT
-When switching from OZW, disable the OZW hardware in domoticz prior to installing zwavejs2mqtt!
+A domoticz plugin for zwave over MQTT. When switching from OZW, disable the OZW hardware in domoticz prior to installing zwavejs2mqtt!
 
 ## Install and run zwavejs2mqtt
 ```
