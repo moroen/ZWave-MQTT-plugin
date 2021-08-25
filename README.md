@@ -8,7 +8,7 @@ If you are currently using OZW in domoticz:
 - Also note the device name of your zwave controller.
 - Disable the domoticz  OZW controller in the hardware section.
 
-## Install and run zwavejs2mqtt
+## Install and run zwavejs2mqtt in a docker container (https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
 The default way:
 ```
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
@@ -19,7 +19,8 @@ create a storage folder: /opt/zwavejs2mqtt/store
 docker run -d --name zwavejs2mqtt --restart unless-stopped -v /opt/zwavejs2mqtt/store:/usr/src/app/store -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0  zwavejs/zwavejs2mqtt:latest
 ```
 This will name the container zwavejs2mqtt and allow you to start, stop, inspect, remove, ...
-Replace /dev/ttyACM0 with your serial device
+There are more options to run zwavejs2mqtt using docker. You are free to use whatever suits your needs (including docker-compose or even running outside of docker).
+In any case, replace /dev/ttyACM0 with your serial device
 
 ## Configure zwavejs2mqtt
 Open the browser http://localhost:8091. 
