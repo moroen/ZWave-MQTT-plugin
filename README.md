@@ -12,7 +12,7 @@ The default way:
 ```
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
-Using persistant storage, started on system startup and running in the background (preferred):
+Using persistent storage, started on system startup and running in the background (preferred):
 create a storage folder: /opt/zwavejs2mqtt/store
 ```
 docker run -d --name zwavejs2mqtt --restart unless-stopped -v /opt/zwavejs2mqtt/store:/usr/src/app/store -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0  zwavejs/zwavejs2mqtt:latest
