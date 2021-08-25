@@ -3,7 +3,7 @@
 # ZWave-MQTT-plugin
 A domoticz plugin for zwave over MQTT.
 If you are currently using OZW in domoticz:
-- you cannot run OZW and zwavejs2mqtt at the same time using the same zwave adapter. You can using different adapters of course.
+- You cannot run OZW and zwavejs2mqtt at the same time using the same zwave adapter. You can using different adapters of course.
 - Note the OZW key in the OZW hardware section, you'll need it later. 
 - Also note the device name of your zwave controller.
 - Disable the domoticz  OZW controller in the hardware section.
