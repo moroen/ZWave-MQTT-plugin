@@ -1,5 +1,8 @@
 [![Lint with black](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml/badge.svg)](https://github.com/moroen/ZWave-MQTT-plugin/actions/workflows/black.yml)
 
+# IMPORTANT!
+Please note that this plugin is currently on hold pending native MQTT (HA) autodiscovery integration in domoticz. This eliminates the need for this plugin. MQTT autodiscovery has been implemented for quite a number of devices already. Status can be followed on the mqtt_autodiscovery channel on slack.
+
 # ZWave-MQTT-plugin
 A domoticz plugin for zwave over MQTT.
 If you are currently using OZW in domoticz:
